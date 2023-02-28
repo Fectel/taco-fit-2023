@@ -1,0 +1,7 @@
+{
+  "name": "taco-fit-2023",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
