@@ -1,0 +1,22 @@
+.ion-select-mg-or-percent{
+  width: fit-content;
+  //background-color: #2fdf75;
+  padding: 0;
+  margin: auto;
+}
+.add-ingredient-name-card-input{
+  width: 70%;
+  height: 2em;
+
+  border-radius: 7px;
+}
+.add-ingredient-label-and-input-container{
+  display: flex;
+  justify-content: space-between;
+}
+.add-ingredient-card-input{
+  width: 6em;
+}
+.add-ingredient-card-input-and-selector-div-container{
+  display: flex;
+}
