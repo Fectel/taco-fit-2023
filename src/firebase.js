@@ -74,7 +74,7 @@ export const updateIngredient = async (ingredientDocId, ingredientData) => {
         potassium,
         selenium,
         zinc,
-        gramsPerTsp,
+        gramsPerTbsp,
     } = ingredientData;
 
 
@@ -120,7 +120,7 @@ export const addNewIngredient = async (ingredient) => {
         potassium,
         selenium,
         zinc,
-        gramsPerTsp
+        gramsPerTbsp
     } = ingredient;
 
     try {
@@ -159,7 +159,7 @@ export const addNewIngredient = async (ingredient) => {
             potassium,
             selenium,
             zinc,
-            gramsPerTsp
+            gramsPerTbsp
         })
 
         await setDoc(doc(db, 'ingredients-collection', docRef.id), {
@@ -197,7 +197,7 @@ export const addNewIngredient = async (ingredient) => {
             potassium,
             selenium,
             zinc,
-            gramsPerTsp,
+            gramsPerTbsp,
             docId: docRef.id,
         })
 
@@ -215,13 +215,63 @@ export const deleteEquipment = async (docId) => {
 
 export const saveRecipeStepPicture = async (blobUrl,stepListIndex,imgIndex,recipeName) => {
 
+    console.log(recipeName)
     const recipeStepsImgRef = ref(storage, `recipe-steps-imgs-ref/${recipeName}/steps/${stepListIndex}/${imgIndex}`);
 
     const response = await fetch(blobUrl);
-    const blob = response.blob();
-    await uploadBytes(recipeStepsImgRef, blob)
+    console.log(response)
+    const blob = await response.blob();
+    await uploadBytes(recipeStepsImgRef, blob).then((snapshot) => {
+        console.log("UPLOADED A BLOB!")
+    })
     const url = getDownloadURL(ref(storage, `recipe-steps-imgs-ref/${recipeName}/steps/${stepListIndex}/${imgIndex}`));
     console.log('save recipe step picture ', url, );
 
     return url;
+}
+
+export const saveNewEquipmentPicture = async  (blobUrl,name) => {
+
+    console.log(name)
+    // const pictureRef = ref(storage,`/menu-item-imgs/${name}`);
+    const menuItemsImgsRef = ref(storage, `equipment-imgs-ref/${name}`);
+
+
+    const response = await fetch(blobUrl);
+    const blob = await response.blob();
+    await uploadBytes(menuItemsImgsRef, blob).then((snapshot) => {
+        console.log("UPLOADED A BLOB!")
+    })
+
+    // // const snapshot = await pictureRef.storage.ref(`/menu-item-imgs/${name}`).put(blob)
+    // // const snapshot = await pictureRef.storage.ref().put(blob);
+    const url = await getDownloadURL(ref(storage,`/equipment-imgs-ref/${name}`));
+
+    // const url = await snapshot.ref.getDownloadURL();
+    console.log('save picture ', url, );
+
+
+    return url;
+}
+export const addNewEquipment = async (equipmentName, imgUrl) => {
+    // const {equipmentName} = equipmentName;
+    // const {imgUrl} = imgUrl;
+
+    console.log("imgUrl: ", imgUrl, " Equipment Name: ", equipmentName)
+    try {
+        const docRef = await addDoc(collection(db, "equipment-collection"), {
+            equipmentName,
+            imgUrl
+        })
+        await setDoc(doc(db, "equipment-collection", docRef.id), {
+            docId: docRef.id,
+            equipmentName,
+            imgUrl
+        })
+
+    }catch (e){
+        console.log("Problems with adding equipment")
+    }
+
+    return console.log("Added nw equipment to firebase", equipmentName)
 }

@@ -12,10 +12,11 @@ import {
 } from "@ionic/react";
 import useLocalStorage from "../../useLocalStorage";
 import {
+    addNewEquipment,
     addNewIngredient, deleteEquipment,
     deleteIngredient,
     loadAnyCollectionData,
-    loadIngredient, saveRecipeStepPicture,
+    loadIngredient, saveNewEquipmentPicture, saveRecipeStepPicture,
     updateIngredient
 } from "../../firebase";
 import {
@@ -296,7 +297,7 @@ function CreateNewRecipe({}){
     const [showAddNewIngredientComponent, setShowAddNewIngredientComponent ] = useState(false)
     const [showAddNewEquipmentComponent, setShowAddNewEquipmentComponent ] = useState(false)
     const [showEditIngredientFacts, setShowEditIngredientFacts ] = useState(false)
-    const [, setEditIngredientDocId ] = useState(undefined)
+    const [dditIngredientDocId, setEditIngredientDocId ] = useState(undefined)
     const [showRecipePreview, setShowRecipePreview ] = useState(false)
     const [showEditIngredientAmount, setShowEditIngredientAmount ] = useState(false)
     const [ingredientToBeEdited, setIngredientToBeEdited ] = useState([])
@@ -333,7 +334,7 @@ function CreateNewRecipe({}){
                             setShowEditIngredientFacts={setShowEditIngredientFacts}
                         />
                         <RecipeCreationEquipmentBox3
-
+                            setShowAddNewEquipmentComponent={setShowAddNewEquipmentComponent}
                             setEquipmentToBeEdited={setEquipmentToBeEdited}
                             setShowEditEquipmentAmount={setShowEditEquipmentAmount}
                             setIngredientToBeEdited={setIngredientToBeEdited}
@@ -437,15 +438,20 @@ function RecipeCreationIngredientsBox3({
     }
 
     return (
-        <>
-            {!deletingIngredient && (
+        <div style={{
+            display: "flex",
+            flexDirection: "column",
+            width: "100%"
+        }}>
+            {renderRecipeCreationIngredientsBox()}
+            {/*{!deletingIngredient && (*/}
                 <div style={{width: "100%"}}>
-                    {renderRecipeCreationIngredientsBox()}
+
                     {renderRecipeIngredientsList()}
                 </div>
 
-            )}
-        </>
+            {/*)}*/}
+        </div>
 
     )
 }
@@ -468,6 +474,7 @@ function SearchAndAddIngredientToList3({
     const [ deleting, setDeleting ] = useState(false)
     const [ searchAndAddIngredientToListStep, setSearchAndAddIngredientToListStep ] = useState("Ingredient Search")
 
+    const [ingredientToBeDeleted, setIngredientToBeDeleted ] = useState("")
 
     function loadAndFilterOfflineData(){
 
@@ -496,6 +503,18 @@ function SearchAndAddIngredientToList3({
 
         console.log(result, " Is Searched Result")
         setFilteredData(result)
+    }
+
+    async function onDeleteIngredient() {
+
+
+        console.log("On Delete Ingredient")
+        await deleteIngredient(ingredientToBeDeleted.docId).then(() => {
+            console.log("Done Deleteing: ", ingredientToBeDeleted.ingredientName)
+            setIngredientToBeDeleted("")
+            loadAndFilterData()
+            setInputState("")
+        })
     }
 
     async function loadAndFilterData() {
@@ -530,19 +549,12 @@ function SearchAndAddIngredientToList3({
         console.log(inputState)
 
         if ( inputState !== " "){
-            console.log("IF")
-            console.log(loadAndFilterData())
-            // console.log(loadAndFilterOfflineData())
+            loadAndFilterData()
 
-        }else if (deleting === true && inputState !== " "){
-            setFilteredData([""])
-            console.log("ELSE IF")
-
-            setInputState("")
         }
 
 
-    },[inputState, deleting,])
+    },[inputState,])
 
     function renderSearchAndAddIngredientToList(){
 
@@ -624,29 +636,49 @@ function SearchAndAddIngredientToList3({
                                             // backgroundColor: "red"
                                         }}
                                     >
-                                        {deleting === true ? (
+                                        {ingredientToBeDeleted !== "" ? (
                                             <IonCard style={{width: "100%",
                                                 fontSize: "1.5rem"
                                             }}>
-                                                <IonCardHeader>
-                                                    Are you sure you want to delete ?
-                                                    <span style={{
-                                                        fontSize: "2rem"
-                                                    }}>INGREDIENT</span>
+                                                <IonCardHeader style={{
+                                                    textAlign: "center"
+                                                }}>
+                                                    <IonCardTitle>
+                                                        Are you sure you want to delete ?
+                                                    </IonCardTitle>
                                                 </IonCardHeader>
+                                                <IonCardContent>
+                                                    <div style={{
+                                                        fontSize: "2rem",
+                                                        textAlign: "center",
+                                                        // margin: "auto",
+                                                        // backgroundColor: "red"
+                                                    }}>{ingredientToBeDeleted?.ingredientName}</div>
+
+                                                    <div style={{
+                                                        display: "flex",
+                                                        justifyContent: "space-evenly",
+                                                        marginTop: "2em",
+                                                        // backgroundColor:"blue"
+                                                    }}>
+                                                        <IonButton onClick={() => setIngredientToBeDeleted("")}>Cancel</IonButton>
+                                                        <IonButton onClick={() => onDeleteIngredient()} color="danger">Delete</IonButton>
+                                                    </div>
+                                                </IonCardContent>
                                             </IonCard>
                                         ):(
                                             <div>
                                                 {filteredData && filteredData.map((data, i) => (
                                                     <AddNewIngredientSearchDataDisplay3
                                                         data={data}
-                                                        setDeleting={setDeleting}
+                                                        // setDeleting={setDeleting}
                                                         setFilteredData={setFilteredData}
                                                         setInputState={setInputState}
                                                         key={i}
                                                         setShowAddIngredientAmount={setShowAddIngredientAmount}
                                                         setShowEditIngredientFacts={setShowEditIngredientFacts}
 
+                                                        setIngredientToBeDeleted={setIngredientToBeDeleted}
                                                         setSearchAndAddIngredientToListStep={setSearchAndAddIngredientToListStep}
 
                                                         setEditIngredientDocId={setEditIngredientDocId}
@@ -682,7 +714,7 @@ function SearchAndAddIngredientToList3({
                     <AddIngredientAmount3
                             showAddIngredientAmount={showAddIngredientAmount}
                             ingredientToBeAdded={ingredientToBeAdded}
-                            setShowAddIngredientAmount={setShowAddIngredientAmount}
+                            setSearchAndAddIngredientToListStep={setSearchAndAddIngredientToListStep}
                             recipeIngredientsList={recipeIngredientsList}
                             setRecipeIngredientsList={setRecipeIngredientsList}
                             setShowAddIngredientToList={setShowAddIngredientToList}
@@ -783,7 +815,7 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
 }
 function RecipeCreationEquipmentBox3({
                                          setShowEditEquipmentAmount,
-                                         setEquipmentToBeEdited,
+                                         setEquipmentToBeEdited, setShowAddNewEquipmentComponent,
                                          recipeEquipmentList, setRecipeEquipmentList,
                                          showAddEquipmentToList, setShowAddEquipmentToList,
                                      }){
@@ -803,6 +835,7 @@ function RecipeCreationEquipmentBox3({
         if ( showAddEquipmentToList === true ){
             return (
                 <SearchAndAddEquipmentToList3
+                    setShowAddNewEquipmentComponent={setShowAddNewEquipmentComponent}
                     setShowAddEquipmentToList={setShowAddEquipmentToList}
                     recipeEquipmentList={recipeEquipmentList}
                     setRecipeEquipmentList={setRecipeEquipmentList}
@@ -811,13 +844,13 @@ function RecipeCreationEquipmentBox3({
 
         } else {
             return (
-                <>
-                    <IonButton onClick={() => setShowAddEquipmentToList(true)}>
+                <div >
+                    <IonButton style={{width: "100%"}} onClick={() => setShowAddEquipmentToList(true)}>
                         + Equipment
                     </IonButton>
                     <div>Equipment List</div>
 
-                </>
+                </div>
 
             )
 
@@ -848,9 +881,8 @@ function RecipeCreationEquipmentBox3({
 }
 
 function AddNewIngredientSearchDataDisplay3({
-data, setInputState, setFilteredData, setEditIngredientDocId, setShowEditIngredientFacts,
-setDeleting,index, list,setList, setIngredientToBeAdded,
-showAddIngredientAmount, setShowAddIngredientAmount,
+data, setInputState, setFilteredData, setEditIngredientDocId, setShowEditIngredientFacts,index, list,setList, setIngredientToBeAdded,
+showAddIngredientAmount, setShowAddIngredientAmount,setIngredientToBeDeleted,
                                                 setSearchAndAddIngredientToListStep,
 
                                             }){
@@ -886,13 +918,10 @@ showAddIngredientAmount, setShowAddIngredientAmount,
     }
     async function onDeleteIconClick() {
 
-        console.log("delete")
-        setDeleting(true)
 
-        // await deleteIngredient(data.docId).then(() => {
-        //     console.log("Done Deleteing")
-        //     setDeleting(false)
-        // })
+        setIngredientToBeDeleted(data)
+
+
     }
 
     function onEditIngredientClick(){
@@ -1359,7 +1388,7 @@ function IngredientsSearchItemNutritionFacts({ingredientSearchNutritionFacts}){
 function AddIngredientAmount3({
                                   recipeIngredientsList, setRecipeIngredientsList,
                                   setShowAddIngredientToList,                  ingredientToBeAdded,
-                                  setShowAddIngredientAmount,
+                                  setSearchAndAddIngredientToListStep,
                               }){
 
     const [ingredientAmount, setIngredientAmount ] = useState(0)
@@ -1401,7 +1430,7 @@ function AddIngredientAmount3({
         temp1[(temp1.length - 1)] = result;
 
         setRecipeIngredientsList([...temp1])
-        setShowAddIngredientAmount(false)
+        setSearchAndAddIngredientToListStep("Ingredient Search")
         console.log(recipeIngredientsList, temp1)
 
         setShowAddIngredientToList(false)
@@ -1442,7 +1471,7 @@ function AddIngredientAmount3({
                     width:"75%",
                     margin: " 1em auto",
                 }}>
-                    <IonButton onClick={() => setShowAddIngredientAmount(false)} color="danger" >cancel</IonButton>
+                    <IonButton onClick={() => setSearchAndAddIngredientToListStep("Ingredient Search")} color="danger" >cancel</IonButton>
                     <IonButton onClick={() => onSaveIngredientToList()} disabled={!buttonEnabled} color="secondary"  >save</IonButton>
                 </div>
             </IonCardContent>
@@ -1540,7 +1569,7 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
     const [selenium, setSelenium] = useState(ingredient !== undefined ? (ingredient?.selenium):(0));
     const [zinc, setZinc] = useState(ingredient !== undefined ? (ingredient?.zinc):(0));
     // const [mgOrPercent, setMgOrPercent] = useState(ingredient !== undefined ? (ingredient?.mgOrPercent):(undefined));
-    const [gramsPerTsp, setGramsPerTsp ] = useState(ingredient !== undefined ? (ingredient?.gramsPerTsp):(0))
+    const [gramsPerTbsp, setGramsPerTbsp ] = useState(ingredient !== undefined ? (ingredient?.gramsPerTbsp):(0))
 
     function ParseFloat(str,val) {
         str = str.toString();
@@ -1622,7 +1651,7 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
             potassium,
             selenium,
             zinc,
-            gramsPerTsp,
+            gramsPerTbsp,
         }
         console.log(ingredientData, editIngredientDocId)
 
@@ -1672,8 +1701,8 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
                     <input className="add-ingredient-name-card-input" value={ingredientName} type="text" onChange={(e) => {setIngredientName(e.target.value)}}/>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
-                    <label className="add-ingredient-label">How many grams in 1 tsp: </label>
-                    <input className="add-ingredient-name-card-input" value={gramsPerTsp} type="text" onChange={(e) => {setGramsPerTsp(e.target.value)}}/>
+                    <label className="add-ingredient-label">How many grams in 1 tbsp: </label>
+                    <input className="add-ingredient-name-card-input" value={gramsPerTbsp} type="text" onChange={(e) => {setGramsPerTbsp(e.target.value)}}/>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Serving Size (g)</label>
@@ -1969,7 +1998,7 @@ function AddIngredientNutritionalFacts({
     const [selenium, setSelenium] = useState(0);
     const [zinc, setZinc] = useState(0);
     // const [mgOrPercent, setMgOrPercent] = useState(undefined);
-    const [gramsPerTsp, setGramsPerTsp] = useState(0)
+    const [gramsPerTbsp, setGramsPerTbsp] = useState(0)
 
 
     function onSaveIngredientClick(){
@@ -2009,7 +2038,7 @@ function AddIngredientNutritionalFacts({
             potassium: parseInt(potassium),
             selenium: parseInt(selenium),
             zinc: parseInt(zinc),
-            gramsPerTsp: parseInt(gramsPerTsp)
+            gramsPerTbsp: parseInt(gramsPerTbsp)
         }
         // setShowAddNewIngredientComponent(false)
         // // setAddingToFirebase(true)
@@ -2053,8 +2082,8 @@ function AddIngredientNutritionalFacts({
                         <input className="add-ingredient-name-card-input" value={ingredientName} type="text" onChange={(e) => {setIngredientName(e.target.value)}}/>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
-                        <label className="add-ingredient-label">How many grams in 1 tsp: </label>
-                        <input className="add-ingredient-name-card-input" value={gramsPerTsp} type="text" onChange={(e) => {setGramsPerTsp(e.target.value)}}/>
+                        <label className="add-ingredient-label">How many grams in 1 tbsp: </label>
+                        <input className="add-ingredient-name-card-input" value={gramsPerTbsp} type="text" onChange={(e) => {setGramsPerTbsp(e.target.value)}}/>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Serving Size (g)</label>
@@ -2318,19 +2347,26 @@ function SearchAndAddEquipmentToList3({
                                           showAddEquipmentToList,
                                           showAddNewEquipmentComponent,
                                           setShowAddEquipmentToList
-                                      }){
+                                      }) {
 
 
-    const [filteredData, setFilteredData ] = useState([""])
-    const [ inputState, setInputState ] = useState("")
-    const [ equipmentToBeAdded, setEquipmentToBeAdded ] = useState(undefined)
-    const [ showAddEquipmentAmount, setShowAddEquipmentAmount ] = useState(false)
+    const [filteredData, setFilteredData] = useState([""])
+    const [inputState, setInputState] = useState("")
+    const [equipmentToBeAdded, setEquipmentToBeAdded] = useState(undefined)
+    const [showAddEquipmentAmount, setShowAddEquipmentAmount] = useState(false)
 
+
+
+
+    const [equipmentComponentStep, setEquipmentComponentStep] = useState("Equipment Search")
     let loadedData;
 
-    const [ deleting, setDeleting ] = useState(false)
+    const [deleting, setDeleting] = useState(false)
 
-    function loadAndFilterOfflineData(){
+
+
+
+    function loadAndFilterOfflineData() {
 
         const offlineDataArray = [
             {
@@ -2369,155 +2405,184 @@ function SearchAndAddEquipmentToList3({
             dataTempArray = [...dataTempArray, doc.data()]
         })
         console.log(dataTempArray)
-        // setLoadedWarmUpExercisesDataFirebase([...dataTempArray])
-
-        // return filteredData;
 
         const isSearched = (element) => (
             element.equipmentName?.toLowerCase().includes(inputState?.toLowerCase())
 
         )
 
-        const result = dataTempArray.filter(isSearched)
+
+        let result = dataTempArray.filter(isSearched)
 
         console.log(result, " Is Searched Result")
         setFilteredData(result)
         return "FUCK YOU!"
 
     }
+    function onEquipmentSearchInputChange(e) {
 
-    useEffect(() => {
 
-        console.log(inputState)
-
-        if ( inputState !== " "){
-            console.log("IF")
-            console.log(loadAndFilterData())
-            // console.log(loadAndFilterOfflineData())
-
-        }else if (deleting === true && inputState !== " "){
-            setFilteredData([""])
-            console.log("ELSE IF")
-
-            setInputState("")
+        console.log(e)
+        setInputState(e)
+        if (e !== " ") {
+            loadAndFilterData();
         }
+    }
 
 
-    },[inputState, deleting, ])
 
-    return (
-        <>
-            {showAddEquipmentAmount === true ? (
-                <AddEquipmentAmount3
-                    showAddEquipmentAmount={showAddEquipmentAmount}
-                    equipmentToBeAdded={equipmentToBeAdded}
-                    setShowAddEquipmentAmount={setShowAddEquipmentAmount}
-                    recipeEquipmentList={recipeEquipmentList}
-                    setRecipeEquipmentList={setRecipeEquipmentList}
-                    setShowAddEquipmentToList={setShowAddEquipmentToList}
-                />
-            ) :(
-                <IonCard>
-                    <div
-                        style={{
-                            position: "absolute",
-                            right: ".5em",
-                            zIndex: "10",
-                            cursor: "pointer"
-                        }}
-                        onClick={() => setShowAddEquipmentToList(false)}
-                    >X</div>
-                    <IonCardHeader>
-
-                        <IonCardTitle
-                        style={{textAlign: "center"}}
-                        >
-                            Equipment Search
-                        </IonCardTitle>
-                    </IonCardHeader>
-
-                    <IonCardContent >
-                        <IonCard  style={{
-                            // backgroundColor: "red",
-                            padding: ".1em",
-                            display: "flex",
-                            justifyContent: "space-around",
-                            // width: "100%",
-                        }}>
-                            {/*<IonCardContent >*/}
+//Need to fix that the search data takes an extra lifecycle to refresh
+//     useEffect(() => {
+//
+//         console.log(newEquipmentName)
+//
+//
+//
+//
+//     },[  newEquipmentName])
 
 
-                            <input
-                                value={inputState}
-                                style={{
-                                    border: "none",
-                                    width: "100%"
-                                }}
-                                // onClick={() => searchClicked()}
-                                className="ingredients-searchbar-input"
-                                type="text"
-                                onChange={(e) => setInputState(e.target.value)}
-                            />
 
-                            <IonIcon size="large" icon={searchIcon}/>
+    function renderEquipmentComponentStep(){
 
-                            <IonButton onClick={() => setShowAddNewEquipmentComponent(true)} size="small" style={{
-                                // width: "2em",
-                                // padding: "0",
-                                // height: "2em",
+        switch (equipmentComponentStep) {
+            case "Equipment Search":
+                return (
+                    <IonCard>
+                        <div
+                            style={{
+                                position: "absolute",
+                                right: ".5em",
+                                zIndex: "10",
+                                cursor: "pointer"
+                            }}
+                            onClick={() => setShowAddEquipmentToList(false)}
+                        >X</div>
+                        <IonCardHeader>
 
+                            <IonCardTitle
+                                style={{textAlign: "center"}}
+                            >
+                                Equipment Search
+                            </IonCardTitle>
+                        </IonCardHeader>
+
+                        <IonCardContent >
+                            <IonCard  style={{
+                                // backgroundColor: "red",
+                                padding: ".1em",
+                                display: "flex",
+                                justifyContent: "space-around",
+                                // width: "100%",
                             }}>
-                                <div>
-                                    <IonIcon size="small" icon={addIcon} />
+                                {/*<IonCardContent >*/}
+
+
+                                <IonInput
+                                    value={inputState}
+                                    style={{
+                                        border: "none",
+                                        width: "100%"
+                                    }}
+                                    // onClick={() => searchClicked()}
+                                    className="ingredients-searchbar-input"
+                                    type="text"
+                                    onIonChange={(e) => onEquipmentSearchInputChange(e.target.value)}
+                                />
+
+                                <IonIcon size="large" icon={searchIcon}/>
+
+                                <IonButton onClick={() => setEquipmentComponentStep("Add New Equipment")} size="small" style={{
+                                    // width: "2em",
+                                    // padding: "0",
+                                    // height: "2em",
+
+                                }}>
+                                    <div>
+                                        <IonIcon size="small" icon={addIcon} />
+
+
+                                    </div>
+                                </IonButton>
+
+
+                            </IonCard>
+
+                            {filteredData.length > 0 && inputState && (
+                                <div
+
+                                    style={{
+                                        width: "100%",
+                                        margin: "auto",
+                                        // padding: "0",
+
+                                        // backgroundColor: "red"
+                                    }}
+                                >
+
+                                    {filteredData && filteredData.map(( data, i ) => (
+                                        <AddNewEquipmentSearchDataDisplay3
+                                            data={data}
+                                            setDeleting={setDeleting}
+                                            setFilteredData={setFilteredData}
+                                            setInputState={setInputState}
+                                            key={i}
+                                            setShowAddEquipmentToList={setShowAddEquipmentToList}
+                                            setEquipmentComponentStep={setEquipmentComponentStep}
+
+                                            setShowAddEquipmentAmount={setShowAddEquipmentAmount}
+
+                                            setEquipmentToBeAdded={setEquipmentToBeAdded}
+                                            // list={recipeEquipmentList}
+                                            // setList={setRecipeEquipmentList}
+                                            recipeEquipmentList={recipeEquipmentList}
+                                            setRecipeEquipmentList={setRecipeEquipmentList}
+                                        />
+                                    ))
+                                    }
+
 
 
                                 </div>
-                            </IonButton>
+                            )}
 
 
-                        </IonCard>
+                        </IonCardContent>
+                    </IonCard>
+                )
+            break;
 
-                        {filteredData.length > 0 && inputState && (
-                            <div
-
-                                style={{
-                                    width: "100%",
-                                    margin: "auto",
-                                    // padding: "0",
-
-                                    // backgroundColor: "red"
-                                }}
-                            >
-
-                                {filteredData && filteredData.map(( data, i ) => (
-                                    <AddNewEquipmentSearchDataDisplay3
-                                        data={data}
-                                        setDeleting={setDeleting}
-                                        setFilteredData={setFilteredData}
-                                        setInputState={setInputState}
-                                        key={i}
-                                        setShowAddEquipmentToList={setShowAddEquipmentToList}
-
-                                        setShowAddEquipmentAmount={setShowAddEquipmentAmount}
-
-                                        setEquipmentToBeAdded={setEquipmentToBeAdded}
-                                        // list={recipeEquipmentList}
-                                        // setList={setRecipeEquipmentList}
-                                        recipeEquipmentList={recipeEquipmentList}
-                                        setRecipeEquipmentList={setRecipeEquipmentList}
-                                    />
-                                ))
-                                }
+            case "Add New Equipment":
 
 
+                return (
+                    <AddNewEquipmentComponent
+                        setEquipmentComponentStep={setEquipmentComponentStep}
+                    />
+                )
 
-                            </div>
-                        )}
+                break;
 
+            case "Add Equipment Amount":
 
-                    </IonCardContent>
-                </IonCard>
-            )}
+                return(
+                    <AddEquipmentAmount3
+                        showAddEquipmentAmount={showAddEquipmentAmount}
+                        equipmentToBeAdded={equipmentToBeAdded}
+                        setShowAddEquipmentAmount={setShowAddEquipmentAmount}
+                        recipeEquipmentList={recipeEquipmentList}
+                        setRecipeEquipmentList={setRecipeEquipmentList}
+                        setShowAddEquipmentToList={setShowAddEquipmentToList}
+                    />
+                )
+        }
+    }
+
+    return (
+
+        <>
+            {renderEquipmentComponentStep()}
+
         </>
 
 
@@ -2600,7 +2665,7 @@ function AddedEquipmentListComponent3({
 
 function AddEquipmentAmount3({
                                  recipeEquipmentList, setRecipeEquipmentList, setShowAddEquipmentToList,
-                                 equipmentToBeAdded, setShowAddEquipmentAmount,
+                                 equipmentToBeAdded, setShowAddEquipmentAmount,setEquipmentComponentStep,
 
                              }){
     const [ equipmentAmount, setEquipmentAmount ] = useState(0)
@@ -2679,7 +2744,7 @@ function AddEquipmentAmount3({
         </IonCard>
     )
 }
-function AddNewEquipmentSearchDataDisplay3({ list, setList,
+function AddNewEquipmentSearchDataDisplay3({ list, setList, setEquipmentComponentStep,
                                                data, setInputState, setFilteredData,setShowAddEquipmentToList, setShowAddEquipmentAmount,
                                                setDeleting,index, recipeEquipmentList,setRecipeEquipmentList, setEquipmentToBeAdded,
                                            }){
@@ -2692,7 +2757,8 @@ function AddNewEquipmentSearchDataDisplay3({ list, setList,
         setFilteredData([""])
 
 
-        setShowAddEquipmentAmount(true)
+        setEquipmentComponentStep("Add Equipment Amount")
+        // setShowAddEquipmentAmount(true)
         setEquipmentToBeAdded(data)
 
 
@@ -2786,6 +2852,174 @@ function AddNewEquipmentSearchDataDisplay3({ list, setList,
     )
 }
 
+function AddNewEquipmentComponent({
+                                      setEquipmentComponentStep
+                                  }){
+
+    const [newEquipmentName, setNewEquipmentName] = useState("")
+    const imageInputRef = useRef();
+
+    const [equipmentUploadedUrl, setEquipmentUploadedUrl ] = useState("")
+    const letters = /^[A-Za-z]+$/
+
+    const handleFileChangeImage = async (event) => {
+
+        if (event.target.files.length > 0) {
+            const file = event.target.files.item(0);
+            const pictureUrlConst = window.URL.createObjectURL(file);
+            console.log('created URL: ', pictureUrlConst)
+
+            const imgUrl = await saveNewEquipmentPicture(pictureUrlConst, newEquipmentName)
+
+            console.log(imgUrl)
+            setEquipmentUploadedUrl(imgUrl)
+
+
+        }
+
+    };
+
+    function onCancelAddNewEquipment(){
+        setEquipmentComponentStep("Equipment Search")
+    }
+
+    // function onInputChange(e){
+    //
+    //     if (e.target.value === " "){
+    //         e.preventDefault()
+    //         console.log(e.target.value)
+    //
+    //     }else{
+    //         setNewEquipmentName(e.target.value)
+    //         console.log(e.target.value, "!!!!")
+    //
+    //     }
+    // }
+    async function onSaveEquipment() {
+        await addNewEquipment(newEquipmentName, equipmentUploadedUrl);
+        console.log("saving equipment")
+        setEquipmentComponentStep("Equipment Search")
+
+    }
+
+    function renderAddNewEquipmentComponent(){
+
+        return (
+            <IonCard>
+                <IonCardHeader style={{textAlign: "center"}}>
+                    <div
+                        style={{
+                            position: "absolute",
+                            right: ".5em",
+                            zIndex: "10",
+                            cursor: "pointer"
+                        }}
+                        onClick={() => setEquipmentComponentStep("Equipment Search")}
+                    >X</div>
+                    <IonCardTitle>
+                        Add New Equipment
+                    </IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                    <IonItem fill="solid">
+                        <IonLabel position="floating">Equipment Name</IonLabel>
+
+                        <IonInput
+                            value={newEquipmentName}
+                            // style={{
+                            //     border: "none",
+                            //     width: "100%"
+                            // }}
+                            // onClick={() => searchClicked()}
+                            type="text"
+                            onIonChange={(e) => setNewEquipmentName(e.target.value)}
+                        />
+                    </IonItem>
+                    {newEquipmentName && newEquipmentName !== " " &&
+                    newEquipmentName !== "  " &&
+                    newEquipmentName !== "   " &&
+                    newEquipmentName !== "    " &&
+                    newEquipmentName !== "     " &&
+                    newEquipmentName !== "      " &&
+                    newEquipmentName !== "       " &&
+                    newEquipmentName !== "         " &&
+                    newEquipmentName.length > 2 &&
+                        (
+                        <div style={{
+                            border:"solid",
+                            display: "flex",
+                            flexDirection: "column"
+                        }}>
+                            <div style={
+                                {width: "15em",
+                                    display: "flex",
+                                    height: "12em",
+                                    border: "solid",
+                                    margin: " 2em auto 0"}}>
+                                {equipmentUploadedUrl === "" ?  (
+                                    <div style={{
+                                        width: "fit-content",
+                                        margin: "auto",
+                                        backgroundColor: "red"}}>Add Photo</div>
+
+                                ): (
+                                    <img src={equipmentUploadedUrl} />
+                                )}
+
+
+                            </div>
+                            <div style={{
+                                border:"solid",
+                                width: "fit-content",
+                                margin: "auto",
+                            }}>
+                                <input type="file" accept="image/*" hidden
+                                       ref={imageInputRef}
+                                       onChange={handleFileChangeImage}
+                                />
+                                <IonButton
+                                    style={{
+                                        width: "fit-content",
+                                        margin: "auto"}}
+                                    onClick={() => imageInputRef.current.click()}
+                                >
+                                    <IonIcon icon={uploadPhotoIcon}/>
+                                </IonButton>
+                            </div>
+                            <div
+
+                                style={{display: "flex",
+                                    backgroundColor: "medium",
+                                    margin: "1em 0",
+                                    justifyContent: "space-evenly",
+                                }}
+                            >
+                                <IonButton onClick={() => onCancelAddNewEquipment()} color="danger">Cancel</IonButton>
+                                <IonButton onClick={() => onSaveEquipment()}>Save</IonButton>
+                            </div>
+
+                        </div>
+                    )}
+
+
+
+
+
+                    {/*</IonCard>*/}
+
+
+                </IonCardContent>
+            </IonCard>
+        )
+
+    }
+
+    return(
+        <div>
+            {renderAddNewEquipmentComponent()}
+        </div>
+    )
+}
 
 function RecipeStepsList({
                               setStepsListTextArray, stepsListTextArray,
@@ -2950,13 +3184,14 @@ function StepsListListComponent3({
             // await handleSave(pictureUrlConst);
             // setPictureUrl(pictureUrlConst)
 
-            let tempPictureArr = []
+            let tempPictureArr = pictureUrlArray;
 
-            if ( pictureUrlArray[0] === ""){
-                console.log(pictureUrlArray)
-            }else{
-                tempPictureArr = pictureUrlArray
-            }
+            // if ( pictureUrlArray.length < 1 ){
+            //     console.log(pictureUrlArray)
+            // }else{
+            //     console.log("else", pictureUrlArray)
+            //     tempPictureArr = pictureUrlArray
+            // }
 
 
             tempPictureArr.push(pictureUrlConst);
@@ -2988,7 +3223,7 @@ function StepsListListComponent3({
                 const entryData = {imgUrl: imgUrl}
                 // setAddingToFirebase(true)
                 console.log(recipeName)
-                entryData.imgUrl = await saveRecipeStepPicture(imgUrl,recipeName, index, imgIndex)
+                entryData.imgUrl = await saveRecipeStepPicture(imgUrl, index, imgIndex, recipeName)
                 console.log(entryData.imgUrl);
                 // setAddingToFirebase(false)
                 return entryData.imgUrl;
@@ -3040,6 +3275,7 @@ function StepsListListComponent3({
                                onChange={handleFileChangeImage}
                         />
 
+
                         {/*{pictureUrl && (*/}
                         {/*    <div style={{width: "100%", margin: "auto", backgroundColor: "green"}}>*/}
                         {/*        /!*<img style={{cursor: "pointer"}} onClick={() => fileInputRef.current.click()} src={pictureUrl} alt=""/>*!/*/}
@@ -3076,7 +3312,7 @@ function StepsListListComponent3({
 
             <div style={{display: "flex"}}>
                 {pictureUrlArray !== undefined  && pictureUrlArray.map((url, i) => (
-                    <div style={{width: "3em", margin: "auto",}}>
+                    <div style={{width: "13em", margin: "auto", backgroundColor: "red"}}>
                         {/*<img style={{cursor: "pointer"}} onClick={() => fileInputRef.current.click()} src={pictureUrl} alt=""/>*/}
                         <img style={{cursor: "pointer"}}  src={url} alt=""/>
                         <div style={{width:"fit-content", margin: " 0 auto", cursor: "pointer"}}>
