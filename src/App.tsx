@@ -21,6 +21,8 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import CreateCustomProteinShakePage from "./pages/create-custom-protein-shake/create-custom-protein-shake";
+import CreateCustomBreakfastHash from "./pages/create-custom-breakfast-hash/create-custom-breakfast-hash";
 
 setupIonicReact();
 
@@ -37,6 +39,12 @@ const App: React.FC = () => (
 
         <Route exact path="/recipes" >
           <RecipesPage />
+        </Route>
+        <Route exact path="/create-custom-protein-shake" >
+          <CreateCustomProteinShakePage />
+        </Route>
+        <Route exact path="/create-custom-breakfast-hash" >
+          <CreateCustomBreakfastHash />
         </Route>
       </IonRouterOutlet>
     </IonReactRouter>

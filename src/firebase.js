@@ -27,6 +27,10 @@ export const deleteIngredient = async (ingredientDocId) => {
     console.log(ingredientDocId)
     await deleteDoc(doc(db, "ingredients-collection", ingredientDocId))
 }
+export const deleteCustomDoc = async (collectionPath,docId) => {
+
+    await deleteDoc(doc(db, collectionPath, docId))
+}
 export const loadIngredient = async (docId) => {
 
     console.log(docId)
@@ -37,6 +41,18 @@ export const loadIngredient = async (docId) => {
 
 
 }
+export const loadEquipment = async (docId) => {
+
+    console.log(docId)
+    const docRef = await getDoc(doc(db,'equipment-collection', docId));
+    console.log(docRef.data())
+
+    return docRef;
+
+
+}
+
+
 export const updateIngredient = async (ingredientDocId, ingredientData) => {
 
     const {
@@ -66,15 +82,22 @@ export const updateIngredient = async (ingredientDocId, ingredientData) => {
         chromium,
         vitaminD,
         vitaminE,
-        folicAcid,
         vitaminK,
         iodine,
         iron,
         magnesium,
         potassium,
+        phosphorus,
         selenium,
         zinc,
         gramsPerTbsp,
+        imgUrl,
+        oxalates,
+        phytates,
+        lectins,
+        saponins,
+        tannins,
+        trypsinInhibitors,
     } = ingredientData;
 
 
@@ -83,6 +106,21 @@ export const updateIngredient = async (ingredientDocId, ingredientData) => {
     const docRef = doc(db, "ingredients-collection", ingredientDocId)
 
     await updateDoc(docRef, {docId: ingredientDocId,...ingredientData})
+}
+export const updateEquipment = async (equipmentDocId, equipmentData) => {
+
+    const {
+        equipmentName,
+
+        imgUrl,
+    } = equipmentData;
+
+
+
+
+    const docRef = doc(db, "equipment-collection", equipmentDocId)
+
+    await updateDoc(docRef, {docId: equipmentDocId,...equipmentData})
 }
 export const addNewIngredient = async (ingredient) => {
     const {
@@ -112,96 +150,93 @@ export const addNewIngredient = async (ingredient) => {
         chromium,
         vitaminD,
         vitaminE,
-        folicAcid,
         vitaminK,
         iodine,
         iron,
         magnesium,
         potassium,
+        phosphorus,
         selenium,
         zinc,
-        gramsPerTbsp
+        gramsPerTbsp,
+        imgUrl,
+        oxalates,
+        phytates,
+        lectins,
+        tannins,
+        saponins,
+        trypsinInhibitors,
+
     } = ingredient;
 
     try {
-        const docRef = await addDoc(collection( db,'ingredients-collection'), {
-            ingredientName,
-            servingSizeGrams,
-            calories,
-            totalFat,
-            saturatedFat,
-            transFat,
-            monounsaturatedFat,
-            polyunsaturatedFat,
-            cholesterol,
-            sodium,
-            totalCarbohydrates,
-            dietaryFiber,
-            totalSugars,
-            addedSugars,
-            protein,
-            vitaminA,
-            vitaminB1,
-            vitaminB2,
-            vitaminB3,
-            vitaminB6,
-            vitaminB12,
-            vitaminC,
-            calcium,
-            chromium,
-            vitaminD,
-            vitaminE,
-            folicAcid,
-            vitaminK,
-            iodine,
-            iron,
-            magnesium,
-            potassium,
-            selenium,
-            zinc,
-            gramsPerTbsp
-        })
+        const docRef = await addDoc(collection( db,'ingredients-collection'), {...ingredient}
+        )
 
-        await setDoc(doc(db, 'ingredients-collection', docRef.id), {
-            ingredientName,
-            servingSizeGrams,
-            calories,
-            totalFat,
-            saturatedFat,
-            transFat,
-            monounsaturatedFat,
-            polyunsaturatedFat,
-            cholesterol,
-            sodium,
-            totalCarbohydrates,
-            dietaryFiber,
-            totalSugars,
-            addedSugars,
-            protein,
-            vitaminA,
-            vitaminB1,
-            vitaminB2,
-            vitaminB3,
-            vitaminB6,
-            vitaminB12,
-            vitaminC,
-            calcium,
-            chromium,
-            vitaminD,
-            vitaminE,
-            folicAcid,
-            vitaminK,
-            iodine,
-            iron,
-            magnesium,
-            potassium,
-            selenium,
-            zinc,
-            gramsPerTbsp,
-            docId: docRef.id,
-        })
+        await setDoc(doc(db, 'ingredients-collection', docRef.id), {docId: docRef.id, ...ingredient})
+
 
         return ("Ingredient added: " + ingredientName)
+    }catch (error){
+        console.log("Problem with adding new ingredient", error.message)
+    }
+}
+
+export const addToppingToCustomDatabase = async (dbPath, toppingData) => {
+
+    const {
+        ingredientName,
+        servingSizeGrams,
+        calories,
+        totalFat,
+        saturatedFat,
+        transFat,
+        monounsaturatedFat,
+        polyunsaturatedFat,
+        cholesterol,
+        sodium,
+        totalCarbohydrates,
+        dietaryFiber,
+        totalSugars,
+        addedSugars,
+        protein,
+        vitaminA,
+        vitaminB1,
+        vitaminB2,
+        vitaminB3,
+        vitaminB6,
+        vitaminB12,
+        vitaminC,
+        calcium,
+        chromium,
+        vitaminD,
+        vitaminE,
+        vitaminK,
+        iodine,
+        iron,
+        magnesium,
+        potassium,
+        phosphorus,
+        selenium,
+        zinc,
+        gramsPerTbsp,
+        imgUrl,
+        oxalates,
+        phytates,
+        lectins,
+        tannins,
+        saponins,
+        trypsinInhibitors,
+        docId
+
+    } = toppingData;
+
+    try {
+        // const docRef = await addDoc(collection( db,dbPath), {...toppingData})
+
+        await setDoc(doc(db, dbPath, docId), { ...toppingData})
+
+        return (`Topping added to ${dbPath}: ` + ingredientName)
     }catch (error){
         console.log("Problem with adding new ingredient", error.message)
     }
@@ -246,6 +281,26 @@ export const saveNewEquipmentPicture = async  (blobUrl,name) => {
     // // const snapshot = await pictureRef.storage.ref(`/menu-item-imgs/${name}`).put(blob)
     // // const snapshot = await pictureRef.storage.ref().put(blob);
     const url = await getDownloadURL(ref(storage,`/equipment-imgs-ref/${name}`));
+
+    // const url = await snapshot.ref.getDownloadURL();
+    console.log('save picture ', url, );
+
+
+    return url;
+}
+export const saveNewIngredientPicture = async  (blobUrl,name) => {
+
+    console.log(name)
+    const menuItemsImgsRef = ref(storage, `ingredient-imgs-ref/${name}`);
+
+
+    const response = await fetch(blobUrl);
+    const blob = await response.blob();
+    await uploadBytes(menuItemsImgsRef, blob).then((snapshot) => {
+        console.log("UPLOADED AN INgredient BLOB!")
+    })
+
+    const url = await getDownloadURL(ref(storage,`/ingredient-imgs-ref/${name}`));
 
     // const url = await snapshot.ref.getDownloadURL();
     console.log('save picture ', url, );

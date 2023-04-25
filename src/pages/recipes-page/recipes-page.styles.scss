@@ -13,9 +13,13 @@
 .add-ingredient-label-and-input-container{
   display: flex;
   justify-content: space-between;
+  width: 30em;
+  font-size: 1.2rem;
+  border-bottom: dashed thin gainsboro;
 }
 .add-ingredient-card-input{
   width: 6em;
+
 }
 .add-ingredient-card-input-and-selector-div-container{
   display: flex;

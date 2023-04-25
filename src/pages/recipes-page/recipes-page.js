@@ -7,7 +7,7 @@ import {
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
+    IonLabel, IonList,
     IonPage, IonSelect, IonSelectOption
 } from "@ionic/react";
 import useLocalStorage from "../../useLocalStorage";
@@ -15,8 +15,8 @@ import {
     addNewEquipment,
     addNewIngredient, deleteEquipment,
     deleteIngredient,
-    loadAnyCollectionData,
-    loadIngredient, saveNewEquipmentPicture, saveRecipeStepPicture,
+    loadAnyCollectionData, loadEquipment,
+    loadIngredient, saveNewEquipmentPicture, saveNewIngredientPicture, saveRecipeStepPicture, updateEquipment,
     updateIngredient
 } from "../../firebase";
 import {
@@ -314,7 +314,7 @@ function CreateNewRecipe({}){
 
         if (recipeCreationStep === "Recipe Creation"){
             return (
-                <div style={{height: "50em", overflowY: "auto"}}>
+                <div style={{height: "100vh", overflowY: "auto"}}>
 
                     <IonItem>
                         <IonLabel style={{color: recipeName === "" ? ("red"):("")}} position="stacked">Recipe Name</IonLabel>
@@ -421,7 +421,7 @@ function RecipeCreationIngredientsBox3({
 
     function renderRecipeIngredientsList(){
         return (
-            <div style={{width:"100%",  fontSize: ".6rem", height: "fit-content"}}>
+            <div style={{width:"100%",  fontSize: "1rem", height: "fit-content"}}>
                 {recipeIngredientsList && recipeIngredientsList.map((data , i) => (
                     <AddedIngredientListComponent data={data} key={i} index={i}
 
@@ -527,9 +527,7 @@ function SearchAndAddIngredientToList3({
             dataTempArray = [...dataTempArray, doc.data()]
         })
         console.log(dataTempArray)
-        // setLoadedWarmUpExercisesDataFirebase([...dataTempArray])
 
-        // return filteredData;
 
         const isSearched = (element) => (
             element.ingredientName?.toLowerCase().includes(inputState?.toLowerCase())
@@ -540,7 +538,6 @@ function SearchAndAddIngredientToList3({
 
         console.log(result, " Is Searched Result")
         setFilteredData(result)
-        return "FUCK YOU!"
 
     }
 
@@ -982,6 +979,11 @@ showAddIngredientAmount, setShowAddIngredientAmount,setIngredientToBeDeleted,
                             cursor: "pointer"}}>
 
                         {data.ingredientName}
+                        <div style={{width: "15em",
+                            margin: "auto"
+                        }}>
+                            <img src={data.imgUrl} />
+                        </div>
                         {ingredientSearchNutritionFacts && (
                             <IngredientsSearchItemNutritionFacts
                                 ingredientSearchNutritionFacts={data}
@@ -1060,12 +1062,12 @@ function IngredientsSearchItemNutritionFacts({ingredientSearchNutritionFacts}){
                     || k == "chromium"
                     || k == "vitaminD"
                     || k == "vitaminE"
-                    || k == "folicAcid"
                     || k == "vitaminK"
                     || k == "iodine"
                     || k == "iron"
                     || k == "magnesium"
                     || k == "potassium"
+                    || k == "phosphorus"
                     || k == "selenium"
                     || k == "zinc"
 
@@ -1530,6 +1532,222 @@ function EditIngredientNutritionalFacts({
     )
 }
 
+function EditEquipment({setEquipmentComponentStep,
+                       editEquipmentDocId,
+                       }){
+
+    const imageInputRef = useRef();
+
+    const [ loadedEquipment, setLoadedEquipment ] = useState([]);
+
+
+    const [equipmentLoaded, setEquipmentLoaded] = useState(false)
+
+
+
+    async function loadEquipmentToBeEdited() {
+
+        console.log(editEquipmentDocId)
+        const loadedEquipment = await loadEquipment(editEquipmentDocId)
+        console.log(loadedEquipment)
+        console.log(loadedEquipment.data())
+        let temp = loadedEquipment.data()
+
+        console.log(temp)
+        setLoadedEquipment(loadedEquipment.data())
+        setEquipmentLoaded(true)
+
+    }
+
+    useEffect(() => {
+        loadEquipmentToBeEdited()
+    },[])
+
+
+
+
+
+    function RenderEditEquipmentComponent({loadedEquipment, setEquipmentComponentStep}){
+
+        const [newEquipmentName, setNewEquipmentName] = useState(loadedEquipment?.equipmentName)
+
+        const [equipmentUploadedUrl, setEquipmentUploadedUrl ] = useState(loadedEquipment?.imgUrl)
+
+        useEffect(() => {
+            console.log(equipmentUploadedUrl)
+        }, [equipmentUploadedUrl])
+
+
+        function onCancelEditEquipment(){
+            setEquipmentComponentStep("Equipment Search")
+        }
+
+        // function onInputChange(e){
+        //
+        //     if (e.target.value === " "){
+        //         e.preventDefault()
+        //         console.log(e.target.value)
+        //
+        //     }else{
+        //         setNewEquipmentName(e.target.value)
+        //         console.log(e.target.value, "!!!!")
+        //
+        //     }
+        // }
+        async function onSaveEquipmentEdit() {
+            const equipmentData = {
+                equipmentName: newEquipmentName,
+                imgUrl: equipmentUploadedUrl
+            }
+            await updateEquipment(editEquipmentDocId, equipmentData);
+            console.log("saving equipment")
+            setEquipmentComponentStep("Equipment Search")
+
+        }
+
+        const handleFileChangeImage = async (event) => {
+
+            if (event.target.files.length > 0) {
+                const file = event.target.files.item(0);
+                const pictureUrlConst = window.URL.createObjectURL(file);
+                console.log('created URL: ', pictureUrlConst)
+
+                const imgUrl = await saveNewEquipmentPicture(pictureUrlConst, newEquipmentName)
+
+                console.log(imgUrl)
+                setEquipmentUploadedUrl(imgUrl)
+
+
+            }
+
+        };
+
+        return (
+            <IonCard>
+                <IonCardHeader style={{textAlign: "center"}}>
+                    <div
+                        style={{
+                            position: "absolute",
+                            right: ".5em",
+                            zIndex: "10",
+                            cursor: "pointer"
+                        }}
+                        onClick={() => setEquipmentComponentStep("Equipment Search")}
+                    >X</div>
+                    <IonCardTitle>
+                        Edit Equipment
+                    </IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                    <IonItem fill="solid">
+                        <IonLabel position="floating">Equipment Name</IonLabel>
+
+                        <IonInput
+                            value={newEquipmentName}
+
+                            type="text"
+                            onIonChange={(e) => setNewEquipmentName(e.target.value)}
+                        />
+                    </IonItem>
+                    {newEquipmentName &&
+                    newEquipmentName !== " " &&
+                    newEquipmentName !== "  " &&
+                    newEquipmentName !== "   " &&
+                    newEquipmentName !== "    " &&
+                    newEquipmentName !== "     " &&
+                    newEquipmentName !== "      " &&
+                    newEquipmentName !== "       " &&
+                    newEquipmentName !== "         " &&
+                    newEquipmentName.length > 2 &&
+                    (
+                        <div style={{
+                            border:"solid",
+                            display: "flex",
+                            flexDirection: "column"
+                        }}>
+                            <div style={
+                                {width: "15em",
+                                    display: "flex",
+                                    height: "12em",
+                                    border: "solid",
+                                    margin: " 2em auto 0"}}>
+                                {equipmentUploadedUrl === "" ?  (
+                                    <div style={{
+                                        width: "fit-content",
+                                        margin: "auto",
+                                        backgroundColor: "red"}}>Add Photo</div>
+
+                                ): (
+                                    <img src={equipmentUploadedUrl} />
+                                )}
+
+
+                            </div>
+                            <div style={{
+                                border:"solid",
+                                width: "fit-content",
+                                margin: "auto",
+                            }}>
+                                <input type="file" accept="image/*" hidden
+                                       ref={imageInputRef}
+                                       onChange={handleFileChangeImage}
+                                />
+                                <IonButton
+                                    style={{
+                                        width: "fit-content",
+                                        margin: "auto"}}
+                                    onClick={() => imageInputRef.current.click()}
+                                >
+                                    <IonIcon icon={uploadPhotoIcon}/>
+                                </IonButton>
+                            </div>
+                            <div
+
+                                style={{display: "flex",
+                                    backgroundColor: "medium",
+                                    margin: "1em 0",
+                                    justifyContent: "space-evenly",
+                                }}
+                            >
+                                <IonButton onClick={() => onCancelEditEquipment()} color="danger">Cancel</IonButton>
+                                <IonButton onClick={() => onSaveEquipmentEdit()}>Save</IonButton>
+                            </div>
+
+                        </div>
+                    )}
+
+
+
+
+
+                    {/*</IonCard>*/}
+
+
+                </IonCardContent>
+            </IonCard>
+        )
+
+    }
+
+
+
+
+
+
+
+    return(
+        <div>
+            {equipmentLoaded && (
+                <RenderEditEquipmentComponent
+                setEquipmentComponentStep={setEquipmentComponentStep}
+                loadedEquipment={loadedEquipment}
+                />
+
+            )}
+        </div>
+    )
+}
+
 function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngredientFacts, setSearchAndAddIngredientToListStep}){
 
 
@@ -1560,22 +1778,49 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
     const [chromium, setChromium] = useState(ingredient !== undefined ? (ingredient?.chromium):(0));
     const [vitaminD, setVitaminD] = useState(ingredient !== undefined ? (ingredient?.vitaminD):(0));
     const [vitaminE, setVitaminE] = useState(ingredient !== undefined ? (ingredient?.vitaminE):(0));
-    const [folicAcid, setFolicAcid] = useState(ingredient !== undefined ? (ingredient?.folicAcid):(0));
     const [vitaminK, setVitaminK] = useState(ingredient !== undefined ? (ingredient?.vitaminK):(0));
     const [iodine, setIodine] = useState(ingredient !== undefined ? (ingredient?.iodine):(0));
     const [iron, setIron] = useState(ingredient !== undefined ? (ingredient?.iron):(0));
     const [magnesium, setMagnesium] = useState(ingredient !== undefined ? (ingredient?.magnesium):(0));
     const [potassium, setPotassium] = useState(ingredient !== undefined ? (ingredient?.potassium):(0));
+    const [phosphorus, setPhosphorus] = useState(ingredient !== undefined ? (ingredient?.phosphorus):(0));
     const [selenium, setSelenium] = useState(ingredient !== undefined ? (ingredient?.selenium):(0));
     const [zinc, setZinc] = useState(ingredient !== undefined ? (ingredient?.zinc):(0));
     // const [mgOrPercent, setMgOrPercent] = useState(ingredient !== undefined ? (ingredient?.mgOrPercent):(undefined));
-    const [gramsPerTbsp, setGramsPerTbsp ] = useState(ingredient !== undefined ? (ingredient?.gramsPerTbsp):(0))
+    const [gramsPerTbsp, setGramsPerTbsp ] = useState(ingredient !== undefined ? (ingredient.gramsPerTbsp === undefined ? (0):(ingredient.gramsPerTbsp)):(0))
+
+    const [imgUrl, setImgUrl ] = useState(ingredient !== undefined ? (ingredient?.imgUrl):(""))
+
+    const [oxalates, setOxalates ] = useState(ingredient !== undefined ? (ingredient?.oxalates):(0))
+    const [phytates, setPhytates ] = useState(ingredient !== undefined ? (ingredient?.phytates):(0))
+    const [lectins, setLectins ] = useState(ingredient !== undefined ? (ingredient?.lectins):(0))
+    const [tannins, setTannins ] = useState(ingredient !== undefined ? (ingredient?.tannins):(0))
+    const [saponins, setSaponins ] = useState(ingredient !== undefined ? (ingredient?.saponins):(0))
+    const [trypsinInhibitors, setTrypsinInhibitors ] = useState(ingredient !== undefined ? (ingredient?.trypsinInhibitors):(0))
+    const [ phytochemicals, setPhytochemicals ] = useState(ingredient !== undefined ? (ingredient?.phytochemicals):(0))
 
     function ParseFloat(str,val) {
         str = str.toString();
         str = str.slice(0, (str.indexOf(".")) + val + 1);
         return Number(str);
     }
+
+    const imageInputRef = useRef();
+    const handleFileChangeImage = async (event) => {
+
+        if (event.target.files.length > 0) {
+            const file = event.target.files.item(0);
+            const pictureUrlConst = window.URL.createObjectURL(file);
+            console.log('created URL: ', pictureUrlConst)
+
+            const imgUrlResult = await saveNewIngredientPicture(pictureUrlConst, ingredientName)
+
+            console.log(imgUrlResult)
+            setImgUrl(imgUrlResult)
+
+        }
+
+    };
 
     console.log(ingredient)
     function onSaveIngredientEditClick(){
@@ -1608,7 +1853,6 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
             // chromium: parseInt(chromium),
             // vitaminD: parseInt(vitaminD),
             // vitaminE: parseInt(vitaminE),
-            // folicAcid: parseInt(folicAcid),
             // vitaminK: parseInt(vitaminK),
             // iodine: parseInt(iodine),
             // iron: parseInt(iron),
@@ -1643,15 +1887,23 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
             chromium,
             vitaminD,
             vitaminE,
-            folicAcid,
             vitaminK,
             iodine,
             iron,
             magnesium,
             potassium,
+            phosphorus,
             selenium,
             zinc,
             gramsPerTbsp,
+            imgUrl,
+            oxalates,
+            phytates,
+            lectins,
+            tannins,
+            saponins,
+            trypsinInhibitors,
+            // phytochemicals,
         }
         console.log(ingredientData, editIngredientDocId)
 
@@ -1702,82 +1954,82 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">How many grams in 1 tbsp: </label>
-                    <input className="add-ingredient-name-card-input" value={gramsPerTbsp} type="text" onChange={(e) => {setGramsPerTbsp(e.target.value)}}/>
+                    <input className="add-ingredient-name-card-input" value={gramsPerTbsp} type="number"  min={0} onChange={(e) => {setGramsPerTbsp(e.target.value)}}/>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Serving Size (g)</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={servingSizeGrams} type="number" onChange={(e) => {setServingSizeGrams(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={servingSizeGrams} type="number"  min={0} onChange={(e) => {setServingSizeGrams(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Calories</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={calories} type="number" onChange={(e) => {setCalories(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={calories} type="number"  min={0} onChange={(e) => {setCalories(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Total Fat</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={totalFat} type="number" onChange={(e) => {setTotalFat(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={totalFat} type="number"  min={0} onChange={(e) => {setTotalFat(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Saturated Fat</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={saturatedFat} type="number" onChange={(e) => {setSaturatedFat(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={saturatedFat} type="number"  min={0} onChange={(e) => {setSaturatedFat(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Trans Fat</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={transFat} type="number" onChange={(e) => {setTransFat(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={transFat} type="number"  min={0} onChange={(e) => {setTransFat(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Monounsaturated Fat</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={monounsaturatedFat} type="number" onChange={(e) => {setMonounsaturatedFat(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={monounsaturatedFat} type="number"  min={0} onChange={(e) => {setMonounsaturatedFat(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Polyunsaturated Fat</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={polyunsaturatedFat} type="number" onChange={(e) => {setPolyunsaturatedFat(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={polyunsaturatedFat} type="number"  min={0} onChange={(e) => {setPolyunsaturatedFat(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Cholesterol</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={cholesterol} type="number" onChange={(e) => {setCholesterol(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={cholesterol} type="number"  min={0} onChange={(e) => {setCholesterol(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Sodium</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={sodium} type="number" onChange={(e) => {setSodium(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={sodium} type="number"  min={0} onChange={(e) => {setSodium(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Total Carbohydrates</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={totalCarbohydrates} type="number" onChange={(e) => {setTotalCarbohydrates(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={totalCarbohydrates} type="number"  min={0} onChange={(e) => {setTotalCarbohydrates(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Dietary Fiber</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={dietaryFiber} type="number" onChange={(e) => {setDietaryFiber(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={dietaryFiber} type="number"  min={0} onChange={(e) => {setDietaryFiber(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
@@ -1785,14 +2037,14 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
                     <label className="add-ingredient-label">Total Sugars</label>
 
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={totalSugars} type="number" onChange={(e) => {setTotalSugars(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={totalSugars} type="number"  min={0} onChange={(e) => {setTotalSugars(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Added Sugars</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={addedSugars} type="number" onChange={(e) => {setAddedSugars(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={addedSugars} type="number"  min={0} onChange={(e) => {setAddedSugars(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
 
@@ -1800,7 +2052,7 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Protein</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={protein} type="number" onChange={(e) => {setProtein(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={protein} type="number"  min={0} onChange={(e) => {setProtein(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">g</label>
                     </div>
                 </div>
@@ -1817,7 +2069,7 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin A</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminA} type="number" onChange={(e) => {setVitaminA(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminA} type="number"  min={0} onChange={(e) => {setVitaminA(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
 
@@ -1825,7 +2077,7 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin B1 (Thiamine)</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminB1} type="number" onChange={(e) => {setVitaminB1(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminB1} type="number"  min={0} onChange={(e) => {setVitaminB1(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
 
@@ -1833,7 +2085,7 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin B2 (Riboflavin)</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminB2} type="number" onChange={(e) => {setVitaminB2(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminB2} type="number"  min={0} onChange={(e) => {setVitaminB2(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
 
@@ -1841,115 +2093,210 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setShowEditIngre
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin B3 (Niacin)</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminB3} type="number" onChange={(e) => {setVitaminB3(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminB3} type="number"  min={0} onChange={(e) => {setVitaminB3(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin B6</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminB6} type="number" onChange={(e) => {setVitaminB6(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminB6} type="number"  min={0} onChange={(e) => {setVitaminB6(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin B12</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminB12} type="number" onChange={(e) => {setVitaminB12(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminB12} type="number"  min={0} onChange={(e) => {setVitaminB12(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin C</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminC} type="number" onChange={(e) => {setVitaminC(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminC} type="number"  min={0} onChange={(e) => {setVitaminC(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Calcium</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={calcium} type="number" onChange={(e) => {setCalcium(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={calcium} type="number"  min={0} onChange={(e) => {setCalcium(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Chromium</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={chromium} type="number" onChange={(e) => {setChromium(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={chromium} type="number"  min={0} onChange={(e) => {setChromium(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin D</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminD} type="number" onChange={(e) => {setVitaminD(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminD} type="number"  min={0} onChange={(e) => {setVitaminD(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin E</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminE} type="number" onChange={(e) => {setVitaminE(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminE} type="number"  min={0} onChange={(e) => {setVitaminE(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
-                <div className="add-ingredient-label-and-input-container">
-                    <label className="add-ingredient-label">Folic Acid</label>
-                    <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={folicAcid} type="number" onChange={(e) => {setFolicAcid(e.target.value)}}/>
-                        <label className="add-ingredient-card-mg-or-percent-text">mg</label>
-                    </div>
-                </div>
+
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Vitamin K</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={vitaminK} type="number" onChange={(e) => {setVitaminK(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={vitaminK} type="number"  min={0} onChange={(e) => {setVitaminK(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Iodine</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={iodine} type="number" onChange={(e) => {setIodine(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={iodine} type="number"  min={0} onChange={(e) => {setIodine(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Iron</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={iron} type="number" onChange={(e) => {setIron(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={iron} type="number"  min={0} onChange={(e) => {setIron(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Magnesium</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={magnesium} type="number" onChange={(e) => {setMagnesium(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={magnesium} type="number"  min={0} onChange={(e) => {setMagnesium(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Potassium</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={potassium} type="number" onChange={(e) => {setPotassium(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={potassium} type="number"  min={0} onChange={(e) => {setPotassium(e.target.value)}}/>
+                        <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                    </div>
+                </div>
+                <div className="add-ingredient-label-and-input-container">
+                    <label className="add-ingredient-label">Phosphorus</label>
+                    <div className="add-ingredient-card-input-and-selector-div-container">
+                        <input className="add-ingredient-card-input" value={phosphorus} type="number"  min={0} onChange={(e) => {setPhosphorus(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Selenium</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={selenium} type="number" onChange={(e) => {setSelenium(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={selenium} type="number"   min={0} onChange={(e) => {setSelenium(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
                 <div className="add-ingredient-label-and-input-container">
                     <label className="add-ingredient-label">Zinc</label>
                     <div className="add-ingredient-card-input-and-selector-div-container">
-                        <input className="add-ingredient-card-input" value={zinc} type="number" onChange={(e) => {setZinc(e.target.value)}}/>
+                        <input className="add-ingredient-card-input" value={zinc} type="number"  min={0} onChange={(e) => {setZinc(e.target.value)}}/>
                         <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                     </div>
                 </div>
+
+                <div className="add-ingredient-label-and-input-container">
+                    <label className="add-ingredient-label">Oxalates</label>
+                    <div className="add-ingredient-card-input-and-selector-div-container">
+                        <input className="add-ingredient-card-input" value={oxalates} type="number"  min={0} onChange={(e) => {setOxalates(e.target.value)}}/>
+                        <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                    </div>
+                </div>
+                <div className="add-ingredient-label-and-input-container">
+                    <label className="add-ingredient-label">Phytates</label>
+                    <div className="add-ingredient-card-input-and-selector-div-container">
+                        <input className="add-ingredient-card-input" value={phytates} type="number"  min={0} onChange={(e) => {setPhytates(e.target.value)}}/>
+                        <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                    </div>
+                </div>
+                <div className="add-ingredient-label-and-input-container">
+                    <label className="add-ingredient-label">Lectins</label>
+                    <div className="add-ingredient-card-input-and-selector-div-container">
+                        <input className="add-ingredient-card-input" value={lectins} type="number"  min={0} onChange={(e) => {setLectins(e.target.value)}}/>
+                        <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                    </div>
+                </div>
+                <div className="add-ingredient-label-and-input-container">
+                    <label className="add-ingredient-label">Tannins</label>
+                    <div className="add-ingredient-card-input-and-selector-div-container">
+                        <input className="add-ingredient-card-input" value={tannins} type="number"  min={0} onChange={(e) => {setTannins(e.target.value)}}/>
+                        <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                    </div>
+                </div>
+                <div className="add-ingredient-label-and-input-container">
+                    <label className="add-ingredient-label">Saponins</label>
+                    <div className="add-ingredient-card-input-and-selector-div-container">
+                        <input className="add-ingredient-card-input" value={saponins} type="number"  min={0} onChange={(e) => {setSaponins(e.target.value)}}/>
+                        <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                    </div>
+                </div>
+                <div className="add-ingredient-label-and-input-container">
+                    <label className="add-ingredient-label">Trypsin Inhibitors</label>
+                    <div className="add-ingredient-card-input-and-selector-div-container">
+                        <input className="add-ingredient-card-input" value={trypsinInhibitors} type="number"  min={0} onChange={(e) => {setTrypsinInhibitors(e.target.value)}}/>
+                        <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                    </div>
+                </div>
+                {ingredientName &&
+                ingredientName !== " " &&
+                ingredientName !== "  " &&
+                ingredientName !== "   " &&
+                ingredientName !== "    " &&
+                ingredientName !== "     " &&
+                ingredientName !== "      " &&
+                ingredientName !== "       " &&
+                ingredientName !== "         " &&
+                ingredientName.length > 2 && (
+                    <div>
+                        <div style={
+                            {width: "15em",
+                                display: "flex",
+                                height: "12em",
+                                border: "solid",
+                                margin: " 2em auto 0"}}>
+                            {imgUrl === "" ?  (
+                                <div style={{
+                                    width: "fit-content",
+                                    margin: "auto",
+                                    backgroundColor: "red"}}>Add Photo</div>
+
+                            ): (
+                                <img src={imgUrl} />
+                            )}
+
+
+                        </div>
+                        <div style={{
+                            border:"solid",
+                            width: "fit-content",
+                            margin: "auto",
+                        }}>
+                            <input type="file" accept="image/*" hidden
+                                   ref={imageInputRef}
+                                   onChange={handleFileChangeImage}
+                            />
+                            <IonButton
+                                style={{
+                                    width: "fit-content",
+                                    margin: "auto"}}
+                                onClick={() => imageInputRef.current.click()}
+                            >
+                                <IonIcon icon={uploadPhotoIcon}/>
+                            </IonButton>
+                        </div>
+                    </div>
+
+
+                )}
                 <IonButton onClick={() => onSaveIngredientEditClick()}>
                     Save Ingredient Edit
                 </IonButton>
@@ -1989,60 +2336,85 @@ function AddIngredientNutritionalFacts({
     const [chromium, setChromium] = useState(0);
     const [vitaminD, setVitaminD] = useState(0);
     const [vitaminE, setVitaminE] = useState(0);
-    const [folicAcid, setFolicAcid] = useState(0);
     const [vitaminK, setVitaminK] = useState(0);
     const [iodine, setIodine] = useState(0);
     const [iron, setIron] = useState(0);
     const [magnesium, setMagnesium] = useState(0);
     const [potassium, setPotassium] = useState(0);
+    const [phosphorus, setPhosphorus] = useState(0);
     const [selenium, setSelenium] = useState(0);
     const [zinc, setZinc] = useState(0);
     // const [mgOrPercent, setMgOrPercent] = useState(undefined);
     const [gramsPerTbsp, setGramsPerTbsp] = useState(0)
+
+    const [ ingredientUploadedImgUrl, setIngredientUploadedImgUrl ] = useState("")
+
+    const [ingredientToppingClassification , setIngredientToppingClassification] = useState([""])
+
+    const [oxalates, setOxalates ] = useState(0)
+    const [phytates, setPhytates ] = useState(0)
+    const [lectins, setLectins ] = useState(0)
+    const [tannins, setTannins ] = useState(0)
+    const [saponins, setSaponins ] = useState(0)
+    const [trypsinInhibitors, setTrypsinInhibitors ] = useState(0)
+    const [ phytochemicals, setPhytochemicals ] = useState(0)
+
+
+
+    const imageInputRef = useRef();
 
 
     function onSaveIngredientClick(){
 
         const ingredientData = {
             ingredientName,
-            servingSizeGrams: parseInt(servingSizeGrams),
-            calories: parseInt(calories),
-            totalFat: parseInt(totalFat),
-            saturatedFat: parseInt(saturatedFat),
-            transFat: parseInt(transFat),
-            monounsaturatedFat: parseInt(monounsaturatedFat),
-            polyunsaturatedFat: parseInt(polyunsaturatedFat),
-            cholesterol: parseInt(cholesterol),
-            sodium: parseInt(sodium),
-            totalCarbohydrates: parseInt(totalCarbohydrates),
-            dietaryFiber: parseInt(dietaryFiber),
-            totalSugars: parseInt(totalSugars),
-            addedSugars: parseInt(addedSugars),
-            protein: parseInt(protein),
-            vitaminA: parseInt(vitaminA),
-            vitaminB1: parseInt(vitaminB1),
-            vitaminB2: parseInt(vitaminB2),
-            vitaminB3: parseInt(vitaminB3),
-            vitaminB6: parseInt(vitaminB6),
-            vitaminB12: parseInt(vitaminB12),
-            vitaminC: parseInt(vitaminC),
-            calcium: parseInt(calcium),
-            chromium: parseInt(chromium),
-            vitaminD: parseInt(vitaminD),
-            vitaminE: parseInt(vitaminE),
-            folicAcid: parseInt(folicAcid),
-            vitaminK: parseInt(vitaminK),
-            iodine: parseInt(iodine),
-            iron: parseInt(iron),
-            magnesium: parseInt(magnesium),
-            potassium: parseInt(potassium),
-            selenium: parseInt(selenium),
-            zinc: parseInt(zinc),
-            gramsPerTbsp: parseInt(gramsPerTbsp)
+            servingSizeGrams: (servingSizeGrams),
+            calories: (calories),
+            totalFat: (totalFat),
+            saturatedFat: (saturatedFat),
+            transFat: (transFat),
+            monounsaturatedFat: (monounsaturatedFat),
+            polyunsaturatedFat: (polyunsaturatedFat),
+            cholesterol: (cholesterol),
+            sodium: (sodium),
+            totalCarbohydrates: (totalCarbohydrates),
+            dietaryFiber: (dietaryFiber),
+            totalSugars: (totalSugars),
+            addedSugars: (addedSugars),
+            protein: (protein),
+            vitaminA: (vitaminA),
+            vitaminB1: (vitaminB1),
+            vitaminB2: (vitaminB2),
+            vitaminB3: (vitaminB3),
+            vitaminB6: (vitaminB6),
+            vitaminB12: (vitaminB12),
+            vitaminC: (vitaminC),
+            calcium: (calcium),
+            chromium: (chromium),
+            vitaminD: (vitaminD),
+            vitaminE: (vitaminE),
+            vitaminK: (vitaminK),
+            iodine: (iodine),
+            iron: (iron),
+            magnesium: (magnesium),
+            potassium: (potassium),
+            phosphorus: (phosphorus),
+            selenium: (selenium),
+            zinc: (zinc),
+            gramsPerTbsp: (gramsPerTbsp),
+            imgUrl: ingredientUploadedImgUrl,
+            oxalates,
+            phytates,
+            lectins,
+            tannins,
+            saponins,
+            trypsinInhibitors,
+            // phytochemicals,
         }
         // setShowAddNewIngredientComponent(false)
         // // setAddingToFirebase(true)
         setSearchAndAddIngredientToListStep("Ingredient Search")
+        console.log(ingredientData)
 
         addNewIngredient(ingredientData).then(x => {
 
@@ -2057,6 +2429,180 @@ function AddIngredientNutritionalFacts({
         // setShowAddNewIngredientComponent(false)
         console.log("close click")
     }
+
+    function renderVitaminABenefits(){
+        if ( vitaminA > 0 ){
+            //Eyes, immune system, Growth, and reporduction, heart lungs and other organs
+            return (
+                <div>VITAMIN A</div>
+            )
+        }
+    }
+    function renderVitaminBBenefits(){
+        if ( vitaminB1 > 0 || vitaminB2 || vitaminB3 || vitaminB6 || vitaminB12){
+            //all B vitamins produce energy
+            //healty liver, skin, hair, and eyes, good brain function. used for nervous system
+            //helps strengthen immune system, and helps body ability to withstand stressfull confitions
+            //healp regulate and enhance apetite
+            //energy, healthy digestive system, nervouse system, and skin
+            return (
+                <div>VITAMIN B</div>
+            )
+        }
+
+    }
+
+    function renderVitaminCBenefits(){
+        if (vitaminC > 0  ){
+            //growth development and repair of all body tissues
+            //immune system
+            //wound healing
+            // maintenance of cartilage, bones,ant teeth
+            //deficeincy associated with stress related disease,
+            //first nutrient to be depleted in alcoholics, smokers, and obeseity
+            //its anitoxidatn propert helps with aging
+
+            return (
+                <div>Vitamin C</div>
+            )
+        }
+    }
+
+    function renderCalciumBenefits(){
+        if (calcium > 0){
+            //helps grown new bone and keeps bones strong
+            //
+            return (
+                <div>CALCIUM</div>
+            )
+        }
+
+    }
+
+    function renderChromiumBenefits(){
+        if (chromium > 0){
+            //can imporove insulin resistance and ehance protein, carbohydrate and lipid metabolism
+            return (
+                <div>CHROMIUM</div>
+            )
+        }
+    }
+
+    function renderVitaminDBenefits(){
+        if (vitaminD > 0 ){
+            //building and maintainging healthy bones
+            //your body can only absorb calcium when vitaminD is present
+            //regulates many cell fucntions in your body
+            //supports immune health, muscle function and brain cell activity
+
+            return (
+                <div>VITAMIN D</div>
+            )
+        }
+    }
+
+    function renderVitaminEBenefits(){
+        if (vitaminE > 0 ){
+            //heps vision, reporoduction, blodd, brain, and skin
+        return (
+            <div>VITAMIN E</div>
+        )
+        }
+    }
+
+    function renderVitaminKBenefits(){
+        if (vitaminK > 0 ){
+            //blood clotting and building of bones
+            return(
+                <div>VITAMIN K</div>
+            )
+
+        }
+    }
+
+    function renderIodineBenefits(){
+        if (iodine > 0 ) {
+            //production of thyroid hormones, which control. metabolism and conversion of food energy,
+            // bone and braind development during pregnancy
+            return(
+                <div> IODINE</div>
+            )
+        }
+    }
+
+    function renderIronBenefits(){
+        if  (iron > 0 ) {
+            //growth and development
+            //normal formation of red blood cells and hemoglobin functino which carries oxygen around the body
+            //assist with many vital functions within the body
+            //reduces tiredness and fatigue
+
+            return (
+                <div>IODINE</div>
+            )
+        }
+    }
+    function renderMagnesiumBenefits(){
+        if (magnesium > 0 ){
+            //important for many processes in the body including
+            //regulating muscle and nerve function
+            //regulating blood sugar levels and blood pressure. and making protiein, bone and DNA
+
+            return (
+                <div>MAGNESIUM</div>
+            )
+        }
+    }
+    function renderPotassiumBenefits(){
+        if (potassium > 0){
+            //helps mantain normal levels of fluid inside our cells
+            //helps muscles contract and supports normal blood pressure
+            // helps stabilize blood sugar levels
+            return ( <div>POTASSIUM</div>)
+        }
+    }
+    function renderPhosphorusBenefits(){
+        if (phosphorus > 0){
+            //helps mantain normal levels of fluid inside our cells
+            //helps muscles contract and supports normal blood pressure
+            // helps stabilize blood sugar levels
+            return ( <div>PHOSPHORUS</div>)
+        }
+    }
+    function renderSeleniumBenefits(){
+        if (selenium > 0 ){
+            //splays a critical role in reproduction, thyroid hormone metabolism, DNa synthesis and prtection from oxidaticve stress
+            return (<div>SELENIUM</div>)
+        }
+    }
+    function renderZincBenefits(){
+        if ( zinc > 0){
+
+            //plays critical role in creation of DNA, growth of cells, building proteins, healing damaged tissues, and supporting a healthy immune system
+            return ( <div>ZINC</div>)
+        }
+
+    }
+
+
+    const handleFileChangeImage = async (event) => {
+
+        if (event.target.files.length > 0) {
+            const file = event.target.files.item(0);
+            const pictureUrlConst = window.URL.createObjectURL(file);
+            console.log('created URL: ', pictureUrlConst)
+
+            const imgUrl = await saveNewIngredientPicture(pictureUrlConst, ingredientName)
+
+            console.log(imgUrl)
+            setIngredientUploadedImgUrl(imgUrl)
+
+        }
+
+    };
+    // useEffect(() => {
+    //
+    // },[ingredientUploadedImgUrl])
 
     return (
         <div>
@@ -2083,82 +2629,82 @@ function AddIngredientNutritionalFacts({
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">How many grams in 1 tbsp: </label>
-                        <input className="add-ingredient-name-card-input" value={gramsPerTbsp} type="text" onChange={(e) => {setGramsPerTbsp(e.target.value)}}/>
+                        <input className="add-ingredient-name-card-input" value={gramsPerTbsp} type="number"   min={0} onChange={(e) => {setGramsPerTbsp(e.target.value)}}/>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Serving Size (g)</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={servingSizeGrams} type="number" onChange={(e) => {setServingSizeGrams(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={servingSizeGrams} type="number"  min={0} onChange={(e) => {setServingSizeGrams(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Calories</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={calories} type="number" onChange={(e) => {setCalories(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={calories} type="number"  min={0} onChange={(e) => {setCalories(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Total Fat</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={totalFat} type="number" onChange={(e) => {setTotalFat(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={totalFat} type="number"  min={0} onChange={(e) => {setTotalFat(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Saturated Fat</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={saturatedFat} type="number" onChange={(e) => {setSaturatedFat(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={saturatedFat} type="number"   min={0} onChange={(e) => {setSaturatedFat(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Trans Fat</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={transFat} type="number" onChange={(e) => {setTransFat(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={transFat} type="number"   min={0} onChange={(e) => {setTransFat(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Monounsaturated Fat</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={monounsaturatedFat} type="number" onChange={(e) => {setMonounsaturatedFat(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={monounsaturatedFat} type="number"  min={0} onChange={(e) => {setMonounsaturatedFat(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Polyunsaturated Fat</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={polyunsaturatedFat} type="number" onChange={(e) => {setPolyunsaturatedFat(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={polyunsaturatedFat} type="number"  min={0} onChange={(e) => {setPolyunsaturatedFat(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Cholesterol</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={cholesterol} type="number" onChange={(e) => {setCholesterol(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={cholesterol} type="number"   min={0} onChange={(e) => {setCholesterol(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Sodium</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={sodium} type="number" onChange={(e) => {setSodium(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={sodium} type="number"  min={0} onChange={(e) => {setSodium(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Total Carbohydrates</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={totalCarbohydrates} type="number" onChange={(e) => {setTotalCarbohydrates(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={totalCarbohydrates} type="number"   min={0} onChange={(e) => {setTotalCarbohydrates(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Dietary Fiber</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={dietaryFiber} type="number" onChange={(e) => {setTotalDietaryFiber(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={dietaryFiber} type="number"   min={0} onChange={(e) => {setTotalDietaryFiber(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
@@ -2166,14 +2712,14 @@ function AddIngredientNutritionalFacts({
                         <label className="add-ingredient-label">Total Sugars</label>
 
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={totalSugars} type="number" onChange={(e) => {setTotalSugars(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={totalSugars} type="number"  min={0} onChange={(e) => {setTotalSugars(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Added Sugars</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={addedSugars} type="number" onChange={(e) => {setAddedSugars(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={addedSugars} type="number"  min={0} onChange={(e) => {setAddedSugars(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
 
@@ -2181,7 +2727,7 @@ function AddIngredientNutritionalFacts({
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Protein</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={protein} type="number" onChange={(e) => {setProtein(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={protein} type="number"  min={0} onChange={(e) => {setProtein(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">g</label>
                         </div>
                     </div>
@@ -2198,7 +2744,7 @@ function AddIngredientNutritionalFacts({
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin A</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminA} type="number" onChange={(e) => {setVitaminA(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminA} type="number"  min={0} onChange={(e) => {setVitaminA(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
 
@@ -2206,7 +2752,7 @@ function AddIngredientNutritionalFacts({
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin B1 (Thiamine)</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminB1} type="number" onChange={(e) => {setVitaminB1(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminB1} type="number"  min={0} onChange={(e) => {setVitaminB1(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
 
@@ -2214,7 +2760,7 @@ function AddIngredientNutritionalFacts({
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin B2 (Riboflavin)</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminB2} type="number" onChange={(e) => {setVitaminB2(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminB2} type="number"  min={0} onChange={(e) => {setVitaminB2(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
 
@@ -2222,115 +2768,252 @@ function AddIngredientNutritionalFacts({
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin B3 (Niacin)</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminB3} type="number" onChange={(e) => {setVitaminB3(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminB3} type="number"  min={0} onChange={(e) => {setVitaminB3(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin B6</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminB6} type="number" onChange={(e) => {setVitaminB6(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminB6} type="number"  min={0} onChange={(e) => {setVitaminB6(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin B12</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminB12} type="number" onChange={(e) => {setVitaminB12(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminB12} type="number"  min={0} onChange={(e) => {setVitaminB12(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin C</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminC} type="number" onChange={(e) => {setVitaminC(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminC} type="number"  min={0} onChange={(e) => {setVitaminC(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Calcium</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={calcium} type="number" onChange={(e) => {setCalcium(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={calcium} type="number"  min={0} onChange={(e) => {setCalcium(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Chromium</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={chromium} type="number" onChange={(e) => {setChromium(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={chromium} type="number"  min={0} onChange={(e) => {setChromium(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin D</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminD} type="number" onChange={(e) => {setVitaminD(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminD} type="number"  min={0} onChange={(e) => {setVitaminD(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin E</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminE} type="number" onChange={(e) => {setVitaminE(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminE} type="number"  min={0} onChange={(e) => {setVitaminE(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
-                    <div className="add-ingredient-label-and-input-container">
-                        <label className="add-ingredient-label">Folic Acid</label>
-                        <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={folicAcid} type="number" onChange={(e) => {setFolicAcid(e.target.value)}}/>
-                            <label className="add-ingredient-card-mg-or-percent-text">mg</label>
-                        </div>
-                    </div>
+
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Vitamin K</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={vitaminK} type="number" onChange={(e) => {setVitaminK(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={vitaminK} type="number"  min={0} onChange={(e) => {setVitaminK(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Iodine</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={iodine} type="number" onChange={(e) => {setIodine(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={iodine} type="number"  min={0} onChange={(e) => {setIodine(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Iron</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={iron} type="number" onChange={(e) => {setIron(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={iron} type="number"  min={0} onChange={(e) => {setIron(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Magnesium</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={magnesium} type="number" onChange={(e) => {setMagnesium(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={magnesium} type="number"  min={0} onChange={(e) => {setMagnesium(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Potassium</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={potassium} type="number" onChange={(e) => {setPotassium(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={potassium} type="number"  min={0} onChange={(e) => {setPotassium(e.target.value)}}/>
+                            <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                        </div>
+                    </div>
+                    <div className="add-ingredient-label-and-input-container">
+                        <label className="add-ingredient-label">Phosphorus</label>
+                        <div className="add-ingredient-card-input-and-selector-div-container">
+                            <input className="add-ingredient-card-input" value={phosphorus} type="number"  min={0} onChange={(e) => {setPhosphorus(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Selenium</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={selenium} type="number" onChange={(e) => {setSelenium(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={selenium} type="number"  min={0} onChange={(e) => {setSelenium(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Zinc</label>
                         <div className="add-ingredient-card-input-and-selector-div-container">
-                            <input className="add-ingredient-card-input" value={zinc} type="number" onChange={(e) => {setZinc(e.target.value)}}/>
+                            <input className="add-ingredient-card-input" value={zinc} type="number"  min={0} onChange={(e) => {setZinc(e.target.value)}}/>
                             <label className="add-ingredient-card-mg-or-percent-text">mg</label>
                         </div>
                     </div>
+                    <div className="add-ingredient-label-and-input-container">
+                        <label className="add-ingredient-label">Oxalates</label>
+                        <div className="add-ingredient-card-input-and-selector-div-container">
+                            <input className="add-ingredient-card-input" value={oxalates} type="number"  min={0} onChange={(e) => {setOxalates(e.target.value)}}/>
+                            <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                        </div>
+                    </div>
+                    <div className="add-ingredient-label-and-input-container">
+                        <label className="add-ingredient-label">Phytates</label>
+                        <div className="add-ingredient-card-input-and-selector-div-container">
+                            <input className="add-ingredient-card-input" value={phytates} type="number"  min={0} onChange={(e) => {setPhytates(e.target.value)}}/>
+                            <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                        </div>
+                    </div>
+                    <div className="add-ingredient-label-and-input-container">
+                        <label className="add-ingredient-label">Lectins</label>
+                        <div className="add-ingredient-card-input-and-selector-div-container">
+                            <input className="add-ingredient-card-input" value={lectins} type="number"  min={0} onChange={(e) => {setLectins(e.target.value)}}/>
+                            <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                        </div>
+                    </div>
+                    <div className="add-ingredient-label-and-input-container">
+                        <label className="add-ingredient-label">Tannins</label>
+                        <div className="add-ingredient-card-input-and-selector-div-container">
+                            <input className="add-ingredient-card-input" value={tannins} type="number"  min={0} onChange={(e) => {setTannins(e.target.value)}}/>
+                            <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                        </div>
+                    </div>
+                    <div className="add-ingredient-label-and-input-container">
+                        <label className="add-ingredient-label">Saponins</label>
+                        <div className="add-ingredient-card-input-and-selector-div-container">
+                            <input className="add-ingredient-card-input" value={saponins} type="number"  min={0} onChange={(e) => {setSaponins(e.target.value)}}/>
+                            <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                        </div>
+                    </div>
+                    <div className="add-ingredient-label-and-input-container">
+                        <label className="add-ingredient-label">Trypsin Inhibitors</label>
+                        <div className="add-ingredient-card-input-and-selector-div-container">
+                            <input className="add-ingredient-card-input" value={trypsinInhibitors} type="number"  min={0} onChange={(e) => {setTrypsinInhibitors(e.target.value)}}/>
+                            <label className="add-ingredient-card-mg-or-percent-text">mg</label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label>Nutritional Benefits Info</label>
+                    </div>
+                    <div>
+                        <label>Nutritional Benefits Tags</label>
+                        {renderVitaminABenefits()}
+                        {renderVitaminBBenefits()}
+                        {renderVitaminCBenefits()}
+                        {renderCalciumBenefits()}
+                        {renderChromiumBenefits()}
+                        {renderVitaminDBenefits()}
+                        {renderVitaminEBenefits()}
+                        {renderVitaminKBenefits()}
+                        {renderIodineBenefits()}
+                        {renderIronBenefits()}
+                        {renderMagnesiumBenefits()}
+                        {renderPotassiumBenefits()}
+                        {renderPhosphorusBenefits()}
+                        {renderSeleniumBenefits()}
+                        {renderZincBenefits()}
+
+                    </div>
+
+                    {ingredientName &&
+                    ingredientName !== " " &&
+                    ingredientName !== "  " &&
+                    ingredientName !== "   " &&
+                    ingredientName !== "    " &&
+                    ingredientName !== "     " &&
+                    ingredientName !== "      " &&
+                    ingredientName !== "       " &&
+                    ingredientName !== "         " &&
+                    ingredientName.length > 2 && (
+                        <div>
+                            <div style={
+                                {width: "15em",
+                                    display: "flex",
+                                    height: "12em",
+                                    border: "solid",
+                                    margin: " 2em auto 0"}}>
+                                {ingredientUploadedImgUrl === "" ?  (
+                                    <div style={{
+                                        width: "fit-content",
+                                        margin: "auto",
+                                        backgroundColor: "red"}}>Add Photo</div>
+
+                                ): (
+                                    <img src={ingredientUploadedImgUrl} />
+                                )}
+
+
+                            </div>
+                            <div style={{
+                                border:"solid",
+                                width: "fit-content",
+                                margin: "auto",
+                            }}>
+                                <input type="file" accept="image/*" hidden
+                                       ref={imageInputRef}
+                                       onChange={handleFileChangeImage}
+                                />
+                                <IonButton
+                                    style={{
+                                        width: "fit-content",
+                                        margin: "auto"}}
+                                    onClick={() => imageInputRef.current.click()}
+                                >
+                                    <IonIcon icon={uploadPhotoIcon}/>
+                                </IonButton>
+                            </div>
+                        </div>
+
+
+                    )}
+
+
+                    {/*<div style={{*/}
+                    {/*    display:"flex",*/}
+                    {/*    justifyContent: "space-between"*/}
+                    {/*}}>*/}
+                    {/*    <label>Ingredient Topping Classification</label>*/}
+                    {/*    <IonSelect style={{*/}
+                    {/*        border:"solid thin",*/}
+                    {/*        width: "8em"*/}
+                    {/*    }}*/}
+                    {/*    onIonChane={(e) => setIngredientToppingClassification(e.target.value)}*/}
+                    {/*    >*/}
+                    {/*        <IonSelectOption>Protein Powder</IonSelectOption>*/}
+                    {/*        <IonSelectOption>Fruit</IonSelectOption>*/}
+                    {/*        <IonSelectOption>Vegetable</IonSelectOption>*/}
+                    {/*        <IonSelectOption>Supplement</IonSelectOption>*/}
+                    {/*    </IonSelect>*/}
+                    {/*</div>*/}
                     <IonButton onClick={() => onSaveIngredientClick()}>
                         Save Ingredient
                     </IonButton>
@@ -2357,12 +3040,16 @@ function SearchAndAddEquipmentToList3({
 
 
 
+    const [editEquipmentDocId, setEditEquipmentDocId] = useState("")
 
     const [equipmentComponentStep, setEquipmentComponentStep] = useState("Equipment Search")
     let loadedData;
 
     const [deleting, setDeleting] = useState(false)
 
+    let result;
+
+    let searchInput;
 
 
 
@@ -2395,7 +3082,9 @@ function SearchAndAddEquipmentToList3({
         setFilteredData(result)
     }
 
-    async function loadAndFilterData() {
+    async function loadAndFilterData(e) {
+
+
         let dataTempArray = [];
 
 
@@ -2404,42 +3093,53 @@ function SearchAndAddEquipmentToList3({
         loadedData.docs.map(doc => {
             dataTempArray = [...dataTempArray, doc.data()]
         })
-        console.log(dataTempArray)
+        // console.log(dataTempArray)
 
         const isSearched = (element) => (
-            element.equipmentName?.toLowerCase().includes(inputState?.toLowerCase())
+            element.equipmentName?.toLowerCase().includes(e?.toLowerCase())
 
         )
 
+        // console.log(e,"<-- e", "IS ===>", inputState)
 
-        let result = dataTempArray.filter(isSearched)
 
-        console.log(result, " Is Searched Result")
-        setFilteredData(result)
-        return "FUCK YOU!"
+        if (e !== undefined || e !== "") {
+            setInputState(e)
+            // result = undefined;
+
+
+            result = dataTempArray.filter(isSearched)
+            setFilteredData(result)
+            console.log(result)
+        }
+        if ( e === "secret"){
+            console.log("secret")
+            setFilteredData(dataTempArray)
+
+
+        }
+
+
+
 
     }
     function onEquipmentSearchInputChange(e) {
 
-
-        console.log(e)
-        setInputState(e)
-        if (e !== " ") {
-            loadAndFilterData();
+        if (e !== " " || e !== "  " || e !== "   ") {
+            loadAndFilterData(e);
         }
     }
 
 
 
-//Need to fix that the search data takes an extra lifecycle to refresh
-//     useEffect(() => {
-//
-//         console.log(newEquipmentName)
-//
-//
-//
-//
-//     },[  newEquipmentName])
+    useEffect(() => {
+
+        console.log(filteredData)
+
+
+
+
+    },[ loadAndFilterData])
 
 
 
@@ -2478,14 +3178,13 @@ function SearchAndAddEquipmentToList3({
                                 {/*<IonCardContent >*/}
 
 
-                                <IonInput
+                                    <IonInput
                                     value={inputState}
                                     style={{
                                         border: "none",
                                         width: "100%"
                                     }}
                                     // onClick={() => searchClicked()}
-                                    className="ingredients-searchbar-input"
                                     type="text"
                                     onIonChange={(e) => onEquipmentSearchInputChange(e.target.value)}
                                 />
@@ -2508,7 +3207,9 @@ function SearchAndAddEquipmentToList3({
 
                             </IonCard>
 
-                            {filteredData.length > 0 && inputState && (
+
+
+                            {filteredData.length > 0 && inputState &&(
                                 <div
 
                                     style={{
@@ -2532,6 +3233,8 @@ function SearchAndAddEquipmentToList3({
 
                                             setShowAddEquipmentAmount={setShowAddEquipmentAmount}
 
+                                            // editEquipmentDocId={editEquipmentDocId}
+                                            setEditEquipmentDocId={setEditEquipmentDocId}
                                             setEquipmentToBeAdded={setEquipmentToBeAdded}
                                             // list={recipeEquipmentList}
                                             // setList={setRecipeEquipmentList}
@@ -2575,6 +3278,16 @@ function SearchAndAddEquipmentToList3({
                         setShowAddEquipmentToList={setShowAddEquipmentToList}
                     />
                 )
+
+            case "Edit Equipment":
+
+                return(
+                    <EditEquipment
+                    editEquipmentDocId={editEquipmentDocId}
+                    setEquipmentComponentStep={setEquipmentComponentStep}
+                    />
+                )
+                break;
         }
     }
 
@@ -2744,7 +3457,7 @@ function AddEquipmentAmount3({
         </IonCard>
     )
 }
-function AddNewEquipmentSearchDataDisplay3({ list, setList, setEquipmentComponentStep,
+function AddNewEquipmentSearchDataDisplay3({ list, setList, setEquipmentComponentStep, setEditEquipmentDocId,
                                                data, setInputState, setFilteredData,setShowAddEquipmentToList, setShowAddEquipmentAmount,
                                                setDeleting,index, recipeEquipmentList,setRecipeEquipmentList, setEquipmentToBeAdded,
                                            }){
@@ -2795,10 +3508,9 @@ function AddNewEquipmentSearchDataDisplay3({ list, setList, setEquipmentComponen
     }
 
     function onEditIngredientClick(){
-        // setEquipmentToBeEdited()
-        // setEditIngredientDocId(data.docId)
-        // setShowEditIngredientsComponent(true)
-        // console.log("Showing edit true ", data.ingredientName,data.docId)
+        setEditEquipmentDocId(data.docId)
+        setEquipmentComponentStep("Edit Equipment")
+        console.log("TO EDIT EQUIPMENT")
     }
 
     return (
@@ -2861,6 +3573,10 @@ function AddNewEquipmentComponent({
 
     const [equipmentUploadedUrl, setEquipmentUploadedUrl ] = useState("")
     const letters = /^[A-Za-z]+$/
+
+    useEffect(() => {
+        console.log(equipmentUploadedUrl)
+    }, [equipmentUploadedUrl])
 
     const handleFileChangeImage = async (event) => {
 
@@ -2935,7 +3651,8 @@ function AddNewEquipmentComponent({
                             onIonChange={(e) => setNewEquipmentName(e.target.value)}
                         />
                     </IonItem>
-                    {newEquipmentName && newEquipmentName !== " " &&
+                    {newEquipmentName &&
+                    newEquipmentName !== " " &&
                     newEquipmentName !== "  " &&
                     newEquipmentName !== "   " &&
                     newEquipmentName !== "    " &&
@@ -3353,7 +4070,7 @@ function RecipeNutritionTotals({recipeIngredientsList, }){
 
         temp.map((ingredient, i) => {
 
-            let newTemp = Object.fromEntries(Object.entries(ingredient).filter(([k, v]) => (v !== 0 && k !== "docId" && k !== "gramsOrCups" && k !== "ingredientName" && k !== "ingredientAmount"
+            let newTemp = Object.fromEntries(Object.entries(ingredient).filter(([k, v]) => (v !== 0 && k !== "gramsPerTbsp" &&  k!== "imgUrl" && k !== "docId" && k !== "gramsOrCups" && k !== "ingredientName" && k !== "ingredientAmount"
                 // && k !== "servingSizeGrams"
             )));
 
@@ -3374,26 +4091,71 @@ function RecipeNutritionTotals({recipeIngredientsList, }){
 
                             newTemp[k] = v * amount;
 
+                        }
+                    })
+
+
+                    break;
+                case "grams" :
+                    console.log(ingredient.ingredientAmount,ingredient.gramsOrCups)
+                    amount = parseFloat(ingredient.ingredientAmount)
+                    Object.entries(newTemp).forEach(([k, v]) => {
+                        if (k !== "docId" && k !== "gramsOrCups" && k !== "ingredientName" && k !== "ingredientAmount" && k !== "ingredientAmount" && k !== "servingSizeGrams"){
+
+                            const newAmount = (amount / ingredient.servingSizeGrams )
+                            console.log("NEW AMOUNT GRAMs" ,newAmount)
+                            newTemp[k] = v * newAmount;
+                            // console.log(k,v , amount)
+                            //
+                            // console.log(newTemp[k], newTemp)
+                        }
+                    })
+                    break;
+                case "cups" :
+                    console.log(ingredient.ingredientAmount,ingredient.gramsOrCups)
+
+                    amount = parseFloat(ingredient.ingredientAmount)
+                    console.log("AMOUNT CUPS", amount)
+                    Object.entries(newTemp).forEach(([k, v]) => {
+                        if (k !== "docId" && k !== "gramsOrCups" && k !== "ingredientName" && k !== "ingredientAmount" && k !== "ingredientAmount" && k !== "servingSizeGrams"){
+
+                            const newAmount = (((amount * 16) * ingredient.gramsPerTbsp) / ingredient.servingSizeGrams )
+                            console.log("NEW AMOUNT" ,newAmount)
+                            newTemp[k] = v * newAmount;
+                            // console.log(k,v , amount)
+                            //
                             // console.log(newTemp[k], newTemp)
                         }
                     })
 
                     break;
-                case "grams" :
-                    console.log(ingredient.ingredientAmount,ingredient.gramsOrCups)
-                    amount = ingredient.ingredientAmount
-
-                    break;
-                case "cups" :
-                    console.log(ingredient.ingredientAmount,ingredient.gramsOrCups)
-
-
-                    break;
                 case "tbsp" :
                     console.log(ingredient.ingredientAmount,ingredient.gramsOrCups)
+                    amount = parseFloat(ingredient.ingredientAmount)
+                    console.log("AMOUNT CUPS", amount)
+                    Object.entries(newTemp).forEach(([k, v]) => {
+                        if (k !== "docId" && k !== "gramsOrCups" && k !== "ingredientName" && k !== "ingredientAmount" && k !== "ingredientAmount" && k !== "servingSizeGrams"){
+
+                            const newAmount = ((amount * ingredient.gramsPerTbsp )/ ingredient.servingSizeGrams)
+                            console.log("NEW AMOUNT" ,newAmount)
+                            newTemp[k] = v * newAmount;
+
+                        }
+                    })
                     break;
                 case "tsp" :
                     console.log(ingredient.ingredientAmount,ingredient.gramsOrCups)
+                    amount = parseFloat(ingredient.ingredientAmount)
+                    console.log("AMOUNT TSP", amount)
+                    Object.entries(newTemp).forEach(([k, v]) => {
+                        if (k !== "docId" && k !== "gramsOrCups" && k !== "ingredientName" && k !== "ingredientAmount" && k !== "ingredientAmount" && k !== "servingSizeGrams"){
+
+                            const newAmount = (((amount / 3) * ingredient.gramsPerTbsp) / ingredient.servingSizeGrams)
+                            console.log("NEW AMOUNT" ,newAmount)
+                            newTemp[k] = v * newAmount;
+
+                        }
+                    })
                     break;
                 default:
                     break;
@@ -3404,7 +4166,7 @@ function RecipeNutritionTotals({recipeIngredientsList, }){
             ingredientsTotal = [...ingredientsTotal, newTemp]
 
         })
-        console.log( temp, ingredientsTotal)
+        // console.log( newTemp, ingredientsTotal)
 
 
         const result = {}
@@ -3436,6 +4198,160 @@ function RecipeNutritionTotals({recipeIngredientsList, }){
         console.log(servings)
 
     }, [recipeIngredientsList, servings])
+
+    function renderVitaminABenefits(){
+        if ( nutritionalTotals?.vitaminA > 0 ){
+            //Eyes, immune system, Growth, and reporduction, heart lungs and other organs
+            return (
+                <div>VITAMIN A</div>
+            )
+        }
+    }
+    function renderVitaminBBenefits(){
+        if ( nutritionalTotals?.vitaminB1 > 0 || nutritionalTotals?.vitaminB2 || nutritionalTotals?.vitaminB3 ||nutritionalTotals?. vitaminB6 || nutritionalTotals?.vitaminB12){
+            //all B vitamins produce energy
+            //healty liver, skin, hair, and eyes, good brain function. used for nervous system
+            //helps strengthen immune system, and helps body ability to withstand stressfull confitions
+            //healp regulate and enhance apetite
+            //energy, healthy digestive system, nervouse system, and skin
+            return (
+                <div>VITAMIN B</div>
+            )
+        }
+
+    }
+
+    function renderVitaminCBenefits(){
+        if (nutritionalTotals?.vitaminC > 0  ){
+            //growth development and repair of all body tissues
+            //immune system
+            //wound healing
+            // maintenance of cartilage, bones,ant teeth
+            //deficeincy associated with stress related disease,
+            //first nutrient to be depleted in alcoholics, smokers, and obeseity
+            //its anitoxidatn propert helps with aging
+
+            return (
+                <div>Vitamin C</div>
+            )
+        }
+    }
+
+    function renderCalciumBenefits(){
+        if (nutritionalTotals?.calcium > 0){
+            //helps grown new bone and keeps bones strong
+            //
+            return (
+                <div>CALCIUM</div>
+            )
+        }
+
+    }
+
+    function renderChromiumBenefits(){
+        if (nutritionalTotals?.chromium > 0){
+            //can imporove insulin resistance and ehance protein, carbohydrate and lipid metabolism
+            return (
+                <div>CHROMIUM</div>
+            )
+        }
+    }
+
+    function renderVitaminDBenefits(){
+        if (nutritionalTotals?.vitaminD > 0 ){
+            //building and maintainging healthy bones
+            //your body can only absorb calcium when vitaminD is present
+            //regulates many cell fucntions in your body
+            //supports immune health, muscle function and brain cell activity
+
+            return (
+                <div>VITAMIN D</div>
+            )
+        }
+    }
+
+    function renderVitaminEBenefits(){
+        if (nutritionalTotals?.vitaminE > 0 ){
+            //heps vision, reporoduction, blodd, brain, and skin
+            return (
+                <div>VITAMIN E</div>
+            )
+        }
+    }
+
+    function renderVitaminKBenefits(){
+        if (nutritionalTotals?.vitaminK > 0 ){
+            //blood clotting and building of bones
+            return(
+                <div>VITAMIN K</div>
+            )
+
+        }
+    }
+
+    function renderIodineBenefits(){
+        if (nutritionalTotals?.iodine > 0 ) {
+            //production of thyroid hormones, which control. metabolism and conversion of food energy,
+            // bone and braind development during pregnancy
+            return(
+                <div> IODINE</div>
+            )
+        }
+    }
+
+    function renderIronBenefits(){
+        if  (nutritionalTotals?.iron > 0 ) {
+            //growth and development
+            //normal formation of red blood cells and hemoglobin functino which carries oxygen around the body
+            //assist with many vital functions within the body
+            //reduces tiredness and fatigue
+
+            return (
+                <div>IODINE</div>
+            )
+        }
+    }
+    function renderMagnesiumBenefits(){
+        if (nutritionalTotals?.magnesium > 0 ){
+            //important for many processes in the body including
+            //regulating muscle and nerve function
+            //regulating blood sugar levels and blood pressure. and making protiein, bone and DNA
+
+            return (
+                <div>MAGNESIUM</div>
+            )
+        }
+    }
+    function renderPotassiumBenefits(){
+        if (nutritionalTotals?.potassium > 0){
+            //helps mantain normal levels of fluid inside our cells
+            //helps muscles contract and supports normal blood pressure
+            // helps stabilize blood sugar levels
+            return ( <div>POTASSIUM</div>)
+        }
+    }
+    function renderPhosphorusBenefits(){
+        if (nutritionalTotals?.phosphorus > 0){
+            //helps mantain normal levels of fluid inside our cells
+            //helps muscles contract and supports normal blood pressure
+            // helps stabilize blood sugar levels
+            return ( <div>PHOSPHORUS</div>)
+        }
+    }
+    function renderSeleniumBenefits(){
+        if (nutritionalTotals?.selenium > 0 ){
+            //splays a critical role in reproduction, thyroid hormone metabolism, DNa synthesis and prtection from oxidaticve stress
+            return (<div>SELENIUM</div>)
+        }
+    }
+    function renderZincBenefits(){
+        if ( nutritionalTotals?.zinc > 0){
+
+            //plays critical role in creation of DNA, growth of cells, building proteins, healing damaged tissues, and supporting a healthy immune system
+            return ( <div>ZINC</div>)
+        }
+
+    }
 
     return (
         <IonCard style={{width: "100%", margin: "1em auto",}}
@@ -3481,105 +4397,6 @@ function RecipeNutritionTotals({recipeIngredientsList, }){
 
                             </IonItem>
 
-                            <IonItem style={{
-                                display: "flex",
-                                flexDirection: "column"
-                            }}>
-                                <div style={{
-                                    backgroundColor: "blue",
-                                    width: "100%",
-                                }}>
-                                    <div>
-                                        Amount per serving
-                                    </div>
-
-                                    <div style={{
-                                        display: "flex",
-
-                                        justifyContent: "space-between",
-                                        fontSize: "2rem",
-                                        fontWeight: "bolder",
-                                        flexDirection: "row",
-                                        width: "100%",
-                                        backgroundColor: "red"
-
-                                    }}>
-
-                                        <div
-
-                                        >
-                                            Calories
-                                        </div>
-                                        <div >
-                                            {ParseFloat((nutritionalTotals.calories / servings), 3)}
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                            </IonItem>
-
-
-                            <div style={{ border: "solid"}}>
-                                <div style={{border: "solid", textAlign: "right",}}>% Daily Value*</div>
-                                <div>
-                                    <div style={{border: "solid",
-                                        display: "flex",
-                                        justifyContent: "space-between"
-
-                                    }}>
-                                        <div>Total Fat {ParseFloat((nutritionalTotals.totalFat / servings), 3)}g </div>
-
-                                        <div>10%</div>
-                                    </div>
-                                    <div>
-                                        <div>Saturated Fat {ParseFloat((nutritionalTotals.saturatedFat / servings), 3)}g</div>
-
-                                        <div>5%</div>
-
-                                    </div>
-                                    <div>
-                                        <div>Trans Fat {ParseFloat((nutritionalTotals.transFat / servings), 3)}g </div>
-                                        <div>%</div>
-                                    </div>
-                                    <div>
-                                        <div>Cholesterol {ParseFloat((nutritionalTotals.cholesterol / servings), 3)}g</div>
-                                        <div>%</div>
-                                    </div>
-                                    <div>
-                                        <div>Sodium</div>
-                                        <div>%</div>
-                                    </div>
-                                    <div>
-                                        <div>
-                                            <div>Total Carbohydrate {ParseFloat((nutritionalTotals.totalCarbohydrate / servings), 3)}g</div>
-                                            <div>%</div>
-                                        </div>
-
-                                        <div>
-                                            <div>Dietary Fiber {ParseFloat((nutritionalTotals.dietaryFiber / servings), 3)}g</div>
-                                            <div>%</div>
-                                        </div>
-                                        <div>
-                                            <div>Total Sugars {ParseFloat((nutritionalTotals.totalSugars / servings), 3)}g</div>
-                                            <div>%</div>
-                                        </div>
-
-                                        <div>x
-                                            <div>Includes {ParseFloat((nutritionalTotals.addedSugars / servings), 3)}g Added Sugars </div>
-                                            <div></div>
-                                        </div>
-
-                                    </div>
-
-
-                                    <div>
-                                        <div>Protein  {ParseFloat((nutritionalTotals.protein / servings), 3)}g</div>
-                                        <div></div>
-                                    </div>
-
-                                </div>
-                            </div>
 
 
                             <IonItem>
@@ -3602,6 +4419,53 @@ function RecipeNutritionTotals({recipeIngredientsList, }){
                                 <IonLabel>Fiber</IonLabel>
                                 <IonLabel>{ParseFloat((nutritionalTotals?.dietaryFiber / servings), 3)} grams</IonLabel>
                             </IonItem>
+                                <IonCard>
+                                    {renderVitaminABenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderVitaminBBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderVitaminCBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderCalciumBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderChromiumBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderVitaminDBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderVitaminEBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderVitaminKBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderIodineBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderIronBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderMagnesiumBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderPotassiumBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderPhosphorusBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderSeleniumBenefits()}
+                                </IonCard>
+                                <IonCard>
+                                    {renderZincBenefits()}
+                                </IonCard>
+
+
                         </>
 
                     )}
