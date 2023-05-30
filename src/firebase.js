@@ -29,7 +29,9 @@ export const deleteIngredient = async (ingredientDocId) => {
 }
 export const deleteCustomDoc = async (collectionPath,docId) => {
 
-    await deleteDoc(doc(db, collectionPath, docId))
+    console.log(collectionPath, docId)
+    await deleteDoc(doc(db, collectionPath, docId)).then((x) =>
+        console.log(x))
 }
 export const loadIngredient = async (docId) => {
 
@@ -53,6 +55,58 @@ export const loadEquipment = async (docId) => {
 }
 
 
+export const addIngredientInventory = async (inventoryData, ingredientData) => {
+
+    console.log(ingredientData, inventoryData)
+    let currentDate = new Date()
+    console.log(currentDate.toDateString())
+    currentDate = currentDate.toDateString();
+
+    try {
+        const docRef = await addDoc(collection( db,`ingredients-collection/${ingredientData.docId}/inventory`), {...inventoryData}
+        )
+
+        await setDoc(doc(db, `ingredients-collection/${ingredientData.docId}/inventory`, docRef.id), {docId: docRef.id, date: currentDate, ...inventoryData})
+
+        const allInventorySnapShot =  await getDocs(collection(db, `ingredients-collection/${ingredientData.docId}/inventory`))
+        let priceTotal = 0;
+        let amountTotal = 0;
+        let averagePrice;
+
+        allInventorySnapShot.docs.map((doc => {
+            console.log(doc.data())
+
+
+
+                priceTotal = priceTotal + parseFloat(doc.data().pricePerUnit)
+                amountTotal = amountTotal + parseFloat(doc.data().ingredientInventoryAmount)
+
+        }))
+        console.log(priceTotal, amountTotal)
+
+        console.log((priceTotal/amountTotal).toFixed(3))
+        averagePrice = (priceTotal/amountTotal).toFixed(3)
+
+        const ingredientFirebaseData = await  getDoc(doc(db, `ingredients-collection/${ingredientData.docId}`))
+        console.log(ingredientFirebaseData, ingredientFirebaseData.data())
+        let newFBData = ingredientFirebaseData.data()
+        console.log(newFBData)
+        newFBData.averagePrice = averagePrice
+        await setDoc(doc(db, `ingredients-collection/${ingredientData.docId}`), { ...newFBData})
+
+
+
+        return console.log("Inventory added and averagePice set: " , averagePrice)
+    }catch (error){
+        console.log("Problem with adding new inventory", error.message)
+    }
+
+
+
+}
+export const deleteIngredientInventory = async (inventoryDocID, ingredientDocId )=> {
+
+}
 export const updateIngredient = async (ingredientDocId, ingredientData) => {
 
     const {

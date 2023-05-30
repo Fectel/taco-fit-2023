@@ -23,7 +23,10 @@ import '@ionic/react/css/display.css';
 import './theme/variables.css';
 import CreateCustomProteinShakePage from "./pages/create-custom-protein-shake/create-custom-protein-shake";
 import CreateCustomBreakfastHash from "./pages/create-custom-breakfast-hash/create-custom-breakfast-hash";
-
+import AdminHomePage from "./pages/admin-home-page/admin-home-page";
+import {SplashPage} from "./pages/splash-page/splash-page"
+import ManageInventory from "./pages/manage-inventory/manage-inventory";
+import MainMenu from "./pages/main-menu/main-menu";
 setupIonicReact();
 
 const App: React.FC = () => (
@@ -31,14 +34,23 @@ const App: React.FC = () => (
     <IonReactRouter>
       <IonRouterOutlet>
         <Route exact path="/home">
-          <Home />
+          <SplashPage />
+        </Route>
+        <Route exact path="/admin-home-page">
+          <AdminHomePage />
         </Route>
         <Route exact path="/">
           <Redirect to="/home" />
         </Route>
+        <Route exact path="/main-menu">
+          <MainMenu />
+        </Route>
 
         <Route exact path="/recipes" >
           <RecipesPage />
+        </Route>
+        <Route exact path="/manage-inventory" >
+          <ManageInventory />
         </Route>
         <Route exact path="/create-custom-protein-shake" >
           <CreateCustomProteinShakePage />
