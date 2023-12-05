@@ -1,15 +1,16 @@
 import React from "react";
 import MainMenuCarousel from "./main-menu-carousel/main-menu-carousel";
-import MainMenuComboDisplay from "./main-menu-carousel/main-menu-combo-display/main-menu-combo-display";
 
 export default function MainMenu(){
 
     return (
-        <div>
-            <div>Main Menu</div>
+        <div style={{
+            border: "solid", width: "100%", height: "100%", margin: "auto", overflowY: "scroll"
+
+        }}>
 
             <MainMenuCarousel />
-            <MainMenuComboDisplay />
+            {/*<OrderSummaryComponent />*/}
         </div>
     )
 }

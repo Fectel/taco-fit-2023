@@ -15,7 +15,7 @@ const AdminHomePage = () => {
 
         const adminDashboardOptions = [
             {
-                title: "Splash Page",
+                title: "UX Page",
                 color: "#fe8a71",
                 href: "/home"
             },
@@ -24,11 +24,11 @@ const AdminHomePage = () => {
                 color: "#f6cd61",
                 href: "/recipes"
             },
-            {
-                title: "Manage Finances",
-                color: "#3da4ab",
-                href: "/"
-            },
+            // {
+            //     title: "Manage Finances",
+            //     color: "#3da4ab",
+            //     href: "/"
+            // },
             {
                 title: "Manage Inventory",
                 color: "#0e9aa7",
@@ -36,6 +36,7 @@ const AdminHomePage = () => {
             }
         ]
 
+        // function renderAdminDashboard
         return (
             <IonCard
                 style={{
@@ -44,11 +45,12 @@ const AdminHomePage = () => {
                     padding: "1em",
                 }}
             >
-                {adminDashboardOptions.map(option => (
+                {adminDashboardOptions.map((option,i) => (
                     <IonCard
+                        key={i}
                         onClick={() => onDashboardOptionClick(option.href)}
                     style={{
-                        width: "30em",
+                        width: "100%",
                         display:"flex",
                         height: "10em",
                         cursor: "pointer",
@@ -76,11 +78,20 @@ const AdminHomePage = () => {
     }
 
     return(
-        <IonPage>
+        <div style={{
+            border: "solid",
+            margin: "6em auto",
+            width: "20em",
+            height: "40em",
+            display: "flex",
+            flexDirection: "column",
+            // backgroundColor: "blue",
+        }}
+        >
             Admin home page
             <AdminDashBoard />
 
-        </IonPage>
+        </div>
     )
 }
 

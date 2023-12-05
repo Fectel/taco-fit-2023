@@ -5,7 +5,7 @@
   margin: auto;
 }
 .add-ingredient-name-card-input{
-  width: 70%;
+  width: 60%;
   height: 2em;
 
   border-radius: 7px;
@@ -13,8 +13,8 @@
 .add-ingredient-label-and-input-container{
   display: flex;
   justify-content: space-between;
-  width: 30em;
-  font-size: 1.2rem;
+  width: 100%;
+  font-size: .8rem;
   border-bottom: dashed thin gainsboro;
 }
 .add-ingredient-card-input{

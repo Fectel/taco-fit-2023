@@ -1,4 +1,5 @@
-import React from "react"
+import React, {useEffect} from "react"
+import {auth} from "../../firebase";
 
 export const SplashPage = () => {
 
@@ -66,32 +67,12 @@ export const SplashPage = () => {
 
         return (
             <div>
-
-
-                <div
-                    style={{
-                        border: "solid",
-                        margin: "auto",
-                        width: "40em",
-                        height: "100%",
-                        display: "flex",
-                        flexWrap: "wrap"
-                    }}
-                >
-                    {morningMenuArray.map(x => (
-                        <div
-                            style={{
-                                border: "solid",
-                                width: "50%",
-                                height: "7em",
-                            }}
-                        >
-
-
-                            {x.menuCategoryTitle}
-                        </div>
-                    ))}
+                <div>
+                    Taco Fit
                 </div>
+
+
+
                 <div
                     style={{
                         border: "solid",
@@ -117,25 +98,50 @@ export const SplashPage = () => {
                     ))}
                 </div>
 
-                <div style={{
-                    border: "solid",
-                    margin: "auto",
-                    width: "40em",
-                    height: "100%",
-                    display: "flex",
-                }}>
-                    {emptyArray.map(x => (
-                        <div style={{
-                            border: "solid",
-                            width: "9em",
-                            height: "30em",
-                        }}>
+                <div
+                    style={{
+                        border: "solid",
+                        margin: "auto",
+                        width: "40em",
+                        height: "100%",
+                        display: "flex",
+                        flexWrap: "wrap"
+                    }}
+                >
+                    {morningMenuArray.map(x => (
+                        <div
+                            style={{
+                                border: "solid",
+                                width: "50%",
+                                height: "7em",
+                            }}
+                        >
+
 
                             {x.menuCategoryTitle}
-
                         </div>
                     ))}
                 </div>
+
+                {/*<div style={{*/}
+                {/*    border: "solid",*/}
+                {/*    margin: "auto",*/}
+                {/*    width: "40em",*/}
+                {/*    height: "100%",*/}
+                {/*    display: "flex",*/}
+                {/*}}>*/}
+                {/*    {emptyArray.map(x => (*/}
+                {/*        <div style={{*/}
+                {/*            border: "solid",*/}
+                {/*            width: "9em",*/}
+                {/*            height: "30em",*/}
+                {/*        }}>*/}
+
+                {/*            {x.menuCategoryTitle}*/}
+
+                {/*        </div>*/}
+                {/*    ))}*/}
+                {/*</div>*/}
 
             </div>
 

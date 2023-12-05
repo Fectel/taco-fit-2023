@@ -13,18 +13,29 @@ import {
 import useLocalStorage from "../../useLocalStorage";
 import {
     addNewEquipment,
-    addNewIngredient, deleteEquipment,
-    deleteIngredient,
-    loadAnyCollectionData, loadEquipment,
-    loadIngredient, saveNewEquipmentPicture, saveNewIngredientPicture, saveRecipeStepPicture, updateEquipment,
+    // addNewEquipment,
+    addNewIngredient, deleteAnyDoc,
+    deleteEquipment,
+    deleteIngredient, getRecipeId,
+    loadAnyCollectionData,
+    loadEquipment,
+    loadIngredient,
+    onSaveRecipe,
+    saveNewEquipmentPicture,
+    saveNewIngredientPicture,
+    saveRecipeStepPicture,
+    updateEquipment,
     updateIngredient
 } from "../../firebase";
 import {
     addCircleOutline as addIcon,
     addOutline as addIngredientIcon,
     closeCircleOutline as closeIcon,
+    newspaper as recipePreviewIcon,
+    flask as recipeCreationIcon,
     eyeOutline,
     chevronForwardOutline,
+    arrowBack,
     chevronDownOutline,
     listOutline,
     appsOutline,
@@ -38,44 +49,186 @@ import {
     chevronUpOutline as ascendingIcon,
     chevronDownOutline as descendingIcon,
     imageOutline,
+    cashOutline as menuPageIcon,
 } from "ionicons/icons";
 import "./recipes-page.styles.scss"
+import MenuComboPage2 from "../menu-combo-page/menu-combo-page-2";
+import RecipeCreationAddOnsComponent
+    from "../../components/recipe-creation-add-ons-component/recipe-creation-add-ons-component";
+import RecipeCreationSaucesComponent
+    from "../../components/recipe-creation-sauces-component/recipe-creation-sauces-component";
 
 export default function RecipesPage(){
 
 
     const [chosenRecipe, setChosenRecipe ] = useState("")
-    const [ showRecipeCreation, setShowRecipeCreation ] = useState(false)
+    const [ recipesPageState, setRecipesPageState ] = useState("search")
 
 
     function renderRecipePage(){
 
-        if ( showRecipeCreation === true){
-            return (
-                <CreateNewRecipe />
+        switch (recipesPageState) {
 
-            )
-        }else if ( showRecipeCreation === false){
-            return (
-                <RecipeSearch
-                    setChosenRecipe={setChosenRecipe}
-                    setShowRecipeCreation={setShowRecipeCreation}
-                />)
+            case "search":
+                return (
+                    <RecipeSearch
+                        setChosenRecipe={setChosenRecipe}
+                        setRecipesPageStep={setRecipesPageState}
+                    />
+                )
+
+            case "add":
+                return (
+                    <CreateNewRecipe
+                        setRecipesPageStep={setRecipesPageState}
+
+                    />
+                )
+            case "view":
+                console.log(chosenRecipe)
+                return(
+                    <div style={{
+                        // backgroundColor: "blue",
+                        height: "100%"
+
+                    }}>
+
+                        <IonCard style={{
+                            height: "100%",
+                            width:"90%",
+                        }}>
+                            <IonCard style={{
+                                backgroundColor: "rgba(232,227,170,0.5)",
+
+                            }}>
+                                <IonCardHeader>
+                                    <IonCardTitle style={{textAlign:"center",
+                                    }}>
+                                        {chosenRecipe.recipeName}
+
+                                    </IonCardTitle>
+
+                                </IonCardHeader>
+
+                            </IonCard>
+                            <div  style={{textAlign: "center", margin: "1em"}}>
+                                <div>
+                                    Equipment List
+                                </div>
+                                {chosenRecipe.recipeEquipmentList.length > 0 && (
+                                    <div style={{
+                                        // width:"fit-content",
+                                        fontSize: ".6rem",
+                                        // height: "100%",
+                                        // flexWrap: "wrap",
+                                        zIndex: "0",
+                                        display: "flex",
+                                        // overflowX: "scroll",
+
+
+                                        padding: "0em",
+                                        flexDirection: "column",
+                                        // border:"solid yellow"
+                                    }}>
+                                        <div style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            textAlign: "center",
+                                        }}>
+                                            {chosenRecipe.recipeEquipmentList && chosenRecipe.recipeEquipmentList.map((data , i) => (
+                                                <EquipmentListPreviewComponent
+                                                    data={data}
+                                                    key={i}
+                                                />
+
+                                            ))}
+                                        </div>
+
+
+
+
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{textAlign:"center",
+                                margin:"1em",
+                            }}>
+                                <div>Ingredients List</div>
+
+                                {chosenRecipe.recipeIngredientsList.length > 0 && (
+                                    <div style={{
+                                        height: "fit-content",
+                                        // border: "solid blue",
+                                        // width:"fit-content",
+                                        fontSize: ".6rem",
+                                        // flexWrap: "wrap",
+                                        zIndex: "0",
+                                        display: "flex",
+                                        flexDirection: "column",
+
+
+                                    }}>
+
+
+
+                                        <div style={{display: "flex", flexDirection: "column"}}>
+                                            {chosenRecipe.recipeIngredientsList[0] && chosenRecipe.recipeIngredientsList.map((data, i) => (
+                                                <IngredientListPreviewComponent
+                                                    data={data} key={i} index={i}
+                                                    recipeIngredientsList={chosenRecipe.recipeIngredientsList}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <RecipePreviewStepsComponent
+                                    stepsListTextArray={chosenRecipe.stepsListTextArray}
+                                />
+                            </div>
+
+
+
+                        </IonCard>
+                        <IonButton expand="block" color="danger" onClick={() => setRecipesPageState("search")}>close
+                        </IonButton>
+                    </div>
+                )
+            case "edit":
+                return (
+                    <EditRecipe
+                    data={chosenRecipe}
+                    setRecipesPageStep={setRecipesPageState}
+                    />
+                )
+
         }
-
-
     }
 
     return (
-        <IonPage style={{width: "400px", margin:"auto"}}>
+        <IonCard
+            // style={{width: "400px", margin:"auto"}}
+            style={{
+                border: "solid",
+                margin: "6em auto",
+                width: "22em",
+                // paddingRight: "1em",
+                height: "40em",
+                display: "flex",
+                flexDirection: "column",
+                overflowY: "scroll"
+                // backgroundColor: "blue",
+            }}
+        >
 
             {renderRecipePage()}
-        </IonPage>
+        </IonCard>
     )
 }
 
 function RecipeSearch({
-                          setShowRecipeCreation,
+    setRecipesPageStep,
                             setChosenRecipe,
                       }){
 
@@ -133,7 +286,6 @@ function RecipeSearch({
 
     },[inputState, deleting, ])
 
-
     return (
         <IonCard>
             <IonCardHeader>
@@ -164,7 +316,7 @@ function RecipeSearch({
 
                     <IonIcon size="large" icon={searchIcon}/>
 
-                    <IonButton onClick={() => setShowRecipeCreation(true)} size="small" style={{
+                    <IonButton onClick={() => setRecipesPageStep("add")} size="small" style={{
                         // width: "2em",
                         // padding: "0",
                         // height: "2em",
@@ -201,6 +353,7 @@ function RecipeSearch({
                                 setInputState={setInputState}
                                 key={i}
                                 setChosenRecipe={setChosenRecipe}
+                                setRecipesPageStep={setRecipesPageStep}
                             />
                         ))
                         }
@@ -218,7 +371,7 @@ function RecipeSearch({
 }
 
 function RecipeSearchDataDisplay({
-    setShowEditIngredientFacts,
+    setShowEditIngredientFacts,setRecipesPageStep,
                                      setChosenRecipe,data, setInputState, setFilteredData,setShowAddEquipmentToList, setShowAddEquipmentAmount,
                                      setDeleting,index, recipeEquipmentList,setRecipeEquipmentList, setEquipmentToBeAdded,
                                  }){
@@ -232,6 +385,7 @@ function RecipeSearchDataDisplay({
         console.log(data)
 
         setChosenRecipe(data)
+        setRecipesPageStep("view")
 
 
     }
@@ -247,8 +401,15 @@ function RecipeSearchDataDisplay({
         // })
     }
 
-    function onEditIngredientClick(){
-         }
+    function onEditRecipeClick(data){
+        // setInputState(data.recipeName)
+        setFilteredData([""])
+        console.log(data)
+
+        setChosenRecipe(data)
+        setRecipesPageStep("edit")
+
+    }
 
     return (
         <IonCard  style={{ cursor: "pointer"}}>
@@ -282,7 +443,7 @@ function RecipeSearchDataDisplay({
                                      }} icon={deleteIcon}/>
 
                         </div>
-                        <div onClick={() => onEditIngredientClick()}>
+                        <div onClick={() => onEditRecipeClick(data)}>
                             <IonIcon  size="small"  style={{margin: "0 .5em", zIndex:"10"}}  icon={editIcon}/>
                         </div>
                     </div>
@@ -295,38 +456,143 @@ function RecipeSearchDataDisplay({
     )
 }
 
-function CreateNewRecipe({}){
+function CreateNewRecipe({setRecipesPageStep}){
 
     const [ showAddNewRecipe, setShowAddNewRecipe] = useState(false)
     const [recipeIngredientsList, setRecipeIngredientsList] = useLocalStorage('recipeIngredientsList', [' '])
     const [recipeEquipmentList, setRecipeEquipmentList] = useLocalStorage('recipeEquipmentList', [' '])
     const [stepsListTextArray, setStepsListTextArray ] = useLocalStorage('stepsListTextArray',[""])
+    const [recipeAddOnsList, setRecipeAddOnsList ] = useLocalStorage("recipeAddOnsList", [' '])
+    const [recipeSauceList, setRecipeSauceList ] = useLocalStorage("recipeSauceList", [' '])
     const [resultImgUrl, setResultImgUrl ] = useState("")
     const [showAddIngredientToList, setShowAddIngredientToList ] = useState(false)
     const [showAddEquipmentToList, setShowAddEquipmentToList ] = useState(false)
     const [showAddNewIngredientComponent, setShowAddNewIngredientComponent ] = useState(false)
     const [showAddNewEquipmentComponent, setShowAddNewEquipmentComponent ] = useState(false)
     const [showEditIngredientFacts, setShowEditIngredientFacts ] = useState(false)
-    const [dditIngredientDocId, setEditIngredientDocId ] = useState(undefined)
+    const [editIngredientDocId, setEditIngredientDocId ] = useState(undefined)
     const [showRecipePreview, setShowRecipePreview ] = useState(false)
     const [showEditIngredientAmount, setShowEditIngredientAmount ] = useState(false)
     const [ingredientToBeEdited, setIngredientToBeEdited ] = useState([])
+    const [ingredientToBeEditedArrPos, setIngredientToBeEditedArrPos ] = useState([])
+
+
     const [showEditEquipmentAmount, setShowEditEquipmentAmount ] = useState(false)
-    const [equipmentToBeEdited, setEquipmentToBeEdited ] = useState([])
     const [addingToFirebase, setAddingToFirebase] = useState(false)
     const [recipeName, setRecipeName ] = useLocalStorage('recipeName',"")
     const [chosenRecipe, setChosenRecipe ] = useState(undefined)
+
+
+
+    const [ searchAndAddIngredientToListStep, setSearchAndAddIngredientToListStep ] = useState("Ingredient Search")
+
 
 
     const [ recipeCreationStep, setRecipeCreationStep ] = useState("Recipe Creation")
 
     const [equipmentDropDown, setEquipmentDropDown ] = useState(false)
     const [IngredientDropDown, setIngredientDropDown ] = useState(false)
+    const [ disabled, setDisabled ] = useState(true)
 
-    useEffect(() => {
-        console.log(equipmentDropDown, "<________-----dropDown")
-    }, [equipmentDropDown])
+    const [recipeId , setRecipeId ] = useLocalStorage("recipeId", "")
 
+    const [reset, setReset ] = useState(false);
+    let loaded;
+
+    useEffect(  () => {
+
+        if (reset === true){
+            setReset(false)
+            setRecipesPageStep("search")
+            console.log("Resetting", reset)
+        }
+
+
+
+        if (recipeId === "" && loaded !== true && reset === false) {
+            loadRecipeId()
+
+        }
+        if (recipeEquipmentList.length > 0 && recipeIngredientsList.length > 0 && recipeName !== "" && stepsListTextArray.length > 0){
+          setDisabled(false)
+        }else{
+            setDisabled(true)
+        }
+        console.log(equipmentDropDown, "<________-----dropDown", disabled)
+    }, [stepsListTextArray, recipeEquipmentList,recipeName,recipeIngredientsList,reset ])
+
+    async function loadRecipeId() {
+        console.log(recipeId)
+        loaded = true;
+        let id = await getRecipeId()
+        console.log(id)
+        setRecipeId(id)
+    }
+    async function onSaveRecipeClick() {
+        let recipeObj = {
+            recipeName,
+            recipeEquipmentList,
+            recipeIngredientsList,
+            stepsListTextArray,
+        }
+        console.log(recipeObj)
+        await onSaveRecipe(recipeObj, recipeId)
+
+        const res = await resetInputVariables();
+        console.log(res)
+        if (res === "Complete"){
+            setReset(true)
+
+        }
+
+        // setRecipesPageStep("search")
+
+    }
+
+    async function onCloseCreateNewRecipe() {
+
+        const res = await resetInputVariables();
+        console.log(res)
+        if (res === "Complete") {
+            setReset(true)
+
+        }
+
+    }
+
+    async function deleteCreateNewRecipe() {
+        let docPath = `recipes-collection/${recipeId}`
+        const res = await deleteAnyDoc(docPath)
+        if (res === true){
+            const res2 = await resetInputVariables();
+            console.log(res)
+            if (res2 === "Complete") {
+                setReset(true)
+
+            }
+            // return true;
+        }else {
+            // return false
+        }
+    }
+    function resetInputVariables(){
+        setRecipeName("")
+        setRecipeEquipmentList([' '])
+        setRecipeIngredientsList([' '])
+        setStepsListTextArray([""])
+        setRecipeId("")
+        return "Complete"
+    }
+    function renderSaveRecipeButton(){
+
+        if (recipeEquipmentList.length > 1 && recipeIngredientsList.length > 1 && recipeName !== "" && stepsListTextArray.length > 1){
+            return (
+                <IonButton onClick={() => onSaveRecipeClick()} color="secondary" size="block">Save Recipe</IonButton>
+
+            )
+        }
+
+    }
     function renderCreateNewRecipePage(){
 
 
@@ -334,13 +600,52 @@ function CreateNewRecipe({}){
 
             case "Recipe Creation":
                 return (
-                    <IonCard
+                    <div
                         // style={{height: "100vh", overflowY: "auto", margin:"auto",}}
                 >
-                        <IonCardContent>
+                        <div style={{
+                            // border: "solid",
+                            width:"fit-content",
+                            margin: "auto",
+                        }}>
+                            <IonIcon
+                                onClick={() => setRecipeCreationStep("Recipe Preview")}
+                                style={{fontSize: "24px" , cursor: "pointer"}} icon={recipePreviewIcon} />
+                            <IonIcon
+
+                                style={{fontSize: "24px", color: "blue", cursor: "pointer"}} icon={recipeCreationIcon} />
+                            <IonIcon icon={menuPageIcon}
+                                     style={{fontSize: "24px", cursor: "pointer"}}
+                                     onClick={() => setRecipeCreationStep("Recipe Menu Page")}
+                            />
+                        </div>
+                        <div
+                            style={{
+                                position: "absolute",
+                                right: ".5em",
+                                zIndex: "10",
+                                cursor: "pointer"
+                            }}
+                            onClick={() => deleteCreateNewRecipe()}
+                        >X</div>
+                        <IonCardHeader>
+                            <IonCardTitle style={{textAlign: "center"}}>
+                                Create New Recipe
+                            </IonCardTitle>
+                        </IonCardHeader>
+                        <IonCardContent style={{ padding: 0}}>
                             <IonItem>
-                                <IonLabel style={{color: recipeName === "" ? ("red"):("")}} position="stacked">Recipe Name</IonLabel>
-                                <IonInput   value={recipeName} onIonChange={(e) => setRecipeName(e.target.value)} />
+                                <IonLabel style={{color: recipeName === "" ? ("red"):("")}} position="floating">Recipe Name</IonLabel>
+                                <IonInput
+
+                                    label="Solid input"
+                                    labelPlacement="floating"
+                                    // fill="solid"
+                                    fill="outline"
+                                    style={{
+                                        // backgroundColor: "blue"
+                                }}
+                                    value={recipeName} onIonChange={(e) => setRecipeName(e.target.value)} ></IonInput>
                             </IonItem>
 
                             <div style={{
@@ -348,54 +653,8 @@ function CreateNewRecipe({}){
                                 flexDirection: "column"
                             }}>
                                 <IonList>
-                                    <IonItem button={true} onClick={() => setEquipmentDropDown(!equipmentDropDown)} >
-                                        <div>
-                                            Equipment
-                                        </div>
-
-                                            {equipmentDropDown === true ? (
-                                                <div
-                                                    // onClick={() => setDropDown(false)}
-
-                                                    style={{
-                                                        position:"absolute",
-                                                        right: "0",
-                                                        cursor: "pointer"
-                                                    }}>
-                                                <IonIcon
-                                                    style={{
-                                                    fontSize:"32px"
-                                                        }}
-                                                    icon={chevronDownOutline}/>
-
-
-                                                </div>
-
-
-                                            ) :(
-                                                <div
-                                                    // onClick={() => setDropDown(true)}
-
-                                                    style={{
-                                                        position:"absolute",
-                                                        right: "0",
-                                                        cursor: "pointer"
-                                                    }}>
-                                                    <IonIcon
-                                                        style={{
-                                                      fontSize:"32px"
-                                                         }} icon={chevronForwardOutline}/>
-                                                </div>
-
-                                                    )}
-
-
-                                    </IonItem>
-
-                                    {equipmentDropDown && (
                                         <RecipeCreationEquipmentBox3
                                             setShowAddNewEquipmentComponent={setShowAddNewEquipmentComponent}
-                                            setEquipmentToBeEdited={setEquipmentToBeEdited}
                                             setShowEditEquipmentAmount={setShowEditEquipmentAmount}
                                             setIngredientToBeEdited={setIngredientToBeEdited}
                                             recipeEquipmentList={recipeEquipmentList}
@@ -403,7 +662,6 @@ function CreateNewRecipe({}){
                                             setRecipeEquipmentList={setRecipeEquipmentList}
                                             setShowAddEquipmentToList={setShowAddEquipmentToList}
                                         />
-                                    )}
 
 
                                 </IonList>
@@ -412,12 +670,30 @@ function CreateNewRecipe({}){
                                 <RecipeCreationIngredientsBox3
                                     setShowEditIngredientAmount={setShowEditIngredientAmount}
                                     setIngredientToBeEdited={setIngredientToBeEdited}
+                                    setIngredientToBeEditedArrPos={setIngredientToBeEditedArrPos}
+
                                     setRecipeIngredientsList={setRecipeIngredientsList}
                                     showAddIngredientToList={showAddIngredientToList}
                                     setShowAddIngredientToList={setShowAddIngredientToList}
                                     recipeIngredientsList={recipeIngredientsList}
                                     setShowEditIngredientFacts={setShowEditIngredientFacts}
                                     setRecipeCreationStep={setRecipeCreationStep}
+
+                                    ingredientToBeEdited={ingredientToBeEdited}
+                                    ingredientToBeEditedArrPos={ingredientToBeEditedArrPos}
+
+                                    searchAndAddIngredientToListStep={searchAndAddIngredientToListStep}
+                                    setSearchAndAddIngredientToListStep={setSearchAndAddIngredientToListStep}
+                                />
+                                <RecipeCreationAddOnsComponent
+                                recipeAddOnsList={recipeAddOnsList}
+                                setRecipeAddOnsList={setRecipeAddOnsList}
+                                recipeId={recipeId}
+                                />
+                                <RecipeCreationSaucesComponent
+                                recipeAddOnsList={recipeSauceList}
+                                setRecipeAddOnsList={setRecipeSauceList}
+                                recipeId={recipeId}
                                 />
                             </div>
                             <RecipeStepsList
@@ -428,24 +704,597 @@ function CreateNewRecipe({}){
                             <RecipeNutritionTotals
                                 recipeIngredientsList={recipeIngredientsList}
                             />
-                            <IonButton onClick={() => setShowRecipePreview(true)} color="secondary" size="block">Save Recipe</IonButton>
 
                         </IonCardContent>
 
 
-                    </IonCard>
+                    </div>
                 )
                 break;
-            case "Add Ingredient":
+
+            case "Recipe Preview":
+                return(
+                    <div style={{
+                        // backgroundColor: "blue",
+                        height: "100%"
+
+                    }}>
+                        <div style={{
+                            // border: "solid",
+                            width:"fit-content",
+                            margin: "auto",
+
+                        }}>
+                            <IonIcon style={{fontSize: "24px",  color: "blue", cursor: "pointer"}} icon={recipePreviewIcon} />
+                            <IonIcon
+                                onClick={() => setRecipeCreationStep("Recipe Creation")}
+                                style={{fontSize: "24px", cursor: "pointer"}} icon={recipeCreationIcon} />
+                            <IonIcon icon={menuPageIcon}
+                                     style={{fontSize: "24px", cursor: "pointer"}}
+                                     onClick={() => setRecipeCreationStep("Recipe Menu Page")}
+                            />
+                        </div>
+
+                        <IonCard style={{
+                            height: "100%",
+                            width:"90%",
+                        }}>
+                            <IonCard style={{
+                                backgroundColor: "rgba(232,227,170,0.5)",
+
+                            }}>
+                                <IonCardHeader>
+                                    <IonCardTitle style={{textAlign:"center",
+                                    }}>
+                                        {recipeName}
+
+                                    </IonCardTitle>
+
+                                </IonCardHeader>
+
+                            </IonCard>
+                            <div  style={{textAlign: "center", margin: "1em"}}>
+                                <div>
+                                    Equipment List
+                                </div>
+                                {recipeEquipmentList.length > 0 && (
+                                    <div style={{
+                                        // width:"fit-content",
+                                        fontSize: ".6rem",
+                                        // height: "100%",
+                                        // flexWrap: "wrap",
+                                        zIndex: "0",
+                                        display: "flex",
+                                        // overflowX: "scroll",
+
+
+                                        padding: "0em",
+                                        flexDirection: "column",
+                                        // border:"solid yellow"
+                                    }}>
+                                            <div style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                textAlign: "center",
+                                            }}>
+                                                {recipeEquipmentList && recipeEquipmentList.map((data , i) => (
+                                                    <EquipmentListPreviewComponent
+                                                        data={data}
+                                                        key={i}
+                                                        />
+
+                                                ))}
+                                            </div>
+
+
+
+
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{textAlign:"center",
+                                margin:"1em",
+                            }}>
+                                <div>Ingredients List</div>
+
+                                {recipeIngredientsList.length > 0 && (
+                                    <div style={{
+                                        height: "fit-content",
+                                        // border: "solid blue",
+                                        // width:"fit-content",
+                                        fontSize: ".6rem",
+                                        // flexWrap: "wrap",
+                                        zIndex: "0",
+                                        display: "flex",
+                                        flexDirection: "column",
+
+
+                                    }}>
+
+
+
+                                            <div style={{display: "flex", flexDirection: "column"}}>
+                                                {recipeIngredientsList[0] && recipeIngredientsList.map((data, i) => (
+                                                    <IngredientListPreviewComponent
+                                                        data={data} key={i} index={i}
+                                                        recipeIngredientsList={recipeIngredientsList}
+                                                    />
+                                                ))}
+                                            </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <RecipePreviewStepsComponent
+                                    stepsListTextArray={stepsListTextArray}
+                                />
+                            </div>
+
+                            <div >
+                                {/*{renderSaveRecipeButton()}*/}
+                                <IonButton
+
+                                    disabled={disabled}
+                                    onClick={() => onSaveRecipeClick()}
+                                    color="secondary"
+                                    expand="block">Save Recipe</IonButton>
+
+                            </div>
+
+                        </IonCard>
+                    </div>
+                )
+            case "Recipe Menu Page":
                 return (
-                    <SearchAndAddIngredientToList3
-                        setShowAddIngredientToList={setShowAddIngredientToList}
-                        recipeIngredientsList={recipeIngredientsList}
-                        setRecipeIngredientsList={setRecipeIngredientsList}
-                        setShowEditIngredientFacts={setShowEditIngredientFacts}
-                    />
+                    <div>
+                        <div style={{
+                            // border: "solid",
+                            width:"fit-content",
+                            margin: "auto",
+
+                        }}>
+                            <IonIcon style={{fontSize: "24px", cursor: "pointer"}} icon={recipePreviewIcon}
+                                     onClick={() => setRecipeCreationStep("Recipe Preview")}
+                            />
+                            <IonIcon
+                                onClick={() => setRecipeCreationStep("Recipe Creation")}
+                                style={{fontSize: "24px", cursor: "pointer"}} icon={recipeCreationIcon} />
+                            <IonIcon icon={menuPageIcon}
+                                     style={{fontSize: "24px",  color: "blue", cursor: "pointer"}}
+                                     onClick={() => setRecipeCreationStep("Recipe Menu Page")}
+                            />
+                        </div>
+                        <MenuComboPage2 />
+
+                    </div>
                 )
 
+
+
+        }
+
+    }
+
+    return (
+        // <IonCard style={{width: "300px", overFlow:"hidden"}}>
+        //     <IonCardContent>
+        <div>
+            {renderCreateNewRecipePage()}
+
+        </div>
+            // </IonCardContent>
+        // </IonCard>
+    )
+}
+function EditRecipe({setRecipesPageStep, data}){
+
+    console.log(data)
+    console.log(data.recipeIngredientsList)
+    console.log(data.recipeEquipmentList)
+    console.log(data.stepsListTextArray)
+    const [ showAddNewRecipe, setShowAddNewRecipe] = useState(false)
+    // let recipeIngredientsListInitialValue =
+    const [recipeIngredientsList, setRecipeIngredientsList] = useState( data.recipeIngredientsList.length > 0 ? ([...data.recipeIngredientsList]):([' ']))
+    const [recipeEquipmentList, setRecipeEquipmentList] = useState(data.recipeEquipmentList.length > 0 ? ([...data.recipeEquipmentList]):([' ']))
+    const [stepsListTextArray, setStepsListTextArray ] = useState(data.stepsListTextArray.length > 0 ? ([...data.stepsListTextArray]):([' ']))
+    const [recipeName, setRecipeName ] = useState( data.recipeName  ? (data.recipeName):(""));
+
+    const [resultImgUrl, setResultImgUrl ] = useState("")
+    const [showAddIngredientToList, setShowAddIngredientToList ] = useState(false)
+    const [showAddEquipmentToList, setShowAddEquipmentToList ] = useState(false)
+    const [showAddNewIngredientComponent, setShowAddNewIngredientComponent ] = useState(false)
+    const [showAddNewEquipmentComponent, setShowAddNewEquipmentComponent ] = useState(false)
+    const [showEditIngredientFacts, setShowEditIngredientFacts ] = useState(false)
+    const [editIngredientDocId, setEditIngredientDocId ] = useState(undefined)
+    const [showRecipePreview, setShowRecipePreview ] = useState(false)
+    const [showEditIngredientAmount, setShowEditIngredientAmount ] = useState(false)
+    const [ingredientToBeEdited, setIngredientToBeEdited ] = useState([])
+    const [ingredientToBeEditedArrPos, setIngredientToBeEditedArrPos ] = useState([])
+
+
+    const [showEditEquipmentAmount, setShowEditEquipmentAmount ] = useState(false)
+    const [addingToFirebase, setAddingToFirebase] = useState(false)
+    const [chosenRecipe, setChosenRecipe ] = useState(undefined)
+
+
+
+    const [ searchAndAddIngredientToListStep, setSearchAndAddIngredientToListStep ] = useState("Ingredient Search")
+
+
+
+    const [ recipeCreationStep, setRecipeCreationStep ] = useState("Recipe Creation")
+
+    const [equipmentDropDown, setEquipmentDropDown ] = useState(false)
+    const [IngredientDropDown, setIngredientDropDown ] = useState(false)
+    const [ disabled, setDisabled ] = useState(true)
+
+    const [recipeId , setRecipeId ] = useLocalStorage("recipeId", "")
+
+    const [reset, setReset ] = useState(false);
+    let loaded;
+
+    useEffect(  () => {
+
+        if (reset === true){
+            setReset(false)
+            setRecipesPageStep("search")
+            console.log("Resetting", reset)
+        }
+
+
+
+        if (recipeId === "" && loaded !== true && reset === false) {
+            loadRecipeId()
+
+        }
+        if (recipeEquipmentList.length > 0 && recipeIngredientsList.length > 0 && recipeName !== "" && stepsListTextArray.length > 0){
+          setDisabled(false)
+        }else{
+            setDisabled(true)
+        }
+        console.log(equipmentDropDown, "<________-----dropDown", disabled)
+    }, [stepsListTextArray, recipeEquipmentList,recipeName,recipeIngredientsList,reset ])
+
+    async function loadRecipeId() {
+        console.log(recipeId)
+        loaded = true;
+        let id = await getRecipeId()
+        console.log(id)
+        setRecipeId(id)
+    }
+    async function onSaveRecipeClick() {
+        let recipeObj = {
+            recipeName,
+            recipeEquipmentList,
+            recipeIngredientsList,
+            stepsListTextArray,
+        }
+        console.log(recipeObj)
+        await onSaveRecipe(recipeObj, recipeId)
+
+        const res = await resetInputVariables();
+        console.log(res)
+        if (res === "Complete"){
+            setReset(true)
+
+        }
+
+        // setRecipesPageStep("search")
+
+    }
+
+    async function onCloseCreateNewRecipe() {
+
+        const res = await resetInputVariables();
+        console.log(res)
+        if (res === "Complete") {
+            setReset(true)
+
+        }
+
+    }
+
+    async function deleteCreateNewRecipe() {
+        let docPath = `recipes-collection/${recipeId}`
+        const res = await deleteAnyDoc(docPath)
+        if (res === true){
+            const res2 = await resetInputVariables();
+            console.log(res)
+            if (res2 === "Complete") {
+                setReset(true)
+
+            }
+            // return true;
+        }else {
+            // return false
+        }
+    }
+    function resetInputVariables(){
+        setRecipeName("")
+        setRecipeEquipmentList([' '])
+        setRecipeIngredientsList([' '])
+        setStepsListTextArray([""])
+        setRecipeId("")
+        return "Complete"
+    }
+    function renderSaveRecipeButton(){
+
+        if (recipeEquipmentList.length > 1 && recipeIngredientsList.length > 1 && recipeName !== "" && stepsListTextArray.length > 1){
+            return (
+                <IonButton onClick={() => onSaveRecipeClick()} color="secondary" size="block">Save Recipe</IonButton>
+
+            )
+        }
+
+    }
+    function renderCreateNewRecipePage(){
+
+
+        switch (recipeCreationStep) {
+
+            case "Recipe Creation":
+                return (
+                    <div
+                        // style={{height: "100vh", overflowY: "auto", margin:"auto",}}
+                >
+                        <div style={{
+                            // border: "solid",
+                            width:"fit-content",
+                            margin: "auto",
+                        }}>
+                            <IonIcon
+                                onClick={() => setRecipeCreationStep("Recipe Preview")}
+                                style={{fontSize: "24px" , cursor: "pointer"}} icon={recipePreviewIcon} />
+                            <IonIcon
+
+                                style={{fontSize: "24px", color: "blue", cursor: "pointer"}} icon={recipeCreationIcon} />
+                            <IonIcon icon={menuPageIcon}
+                                     style={{fontSize: "24px", cursor: "pointer"}}
+                                     onClick={() => setRecipeCreationStep("Recipe Menu Page")}
+                            />
+                        </div>
+                        <div
+                            style={{
+                                position: "absolute",
+                                right: ".5em",
+                                zIndex: "10",
+                                cursor: "pointer"
+                            }}
+                            onClick={() => deleteCreateNewRecipe()}
+                        >X</div>
+                        <IonCardHeader>
+                            <IonCardTitle style={{textAlign: "center"}}>
+                                Edit Recipe
+                            </IonCardTitle>
+                        </IonCardHeader>
+                        <IonCardContent style={{ padding: 0}}>
+                            <IonItem>
+                                <IonLabel style={{color: recipeName === "" ? ("red"):("")}} position="floating">Recipe Name</IonLabel>
+                                <IonInput
+
+                                    label="Solid input"
+                                    labelPlacement="floating"
+                                    // fill="solid"
+                                    fill="outline"
+                                    style={{
+                                        // backgroundColor: "blue"
+                                }}
+                                    value={recipeName} onIonChange={(e) => setRecipeName(e.target.value)} ></IonInput>
+                            </IonItem>
+
+                            <div style={{
+                                display: "flex",
+                                flexDirection: "column"
+                            }}>
+                                <IonList>
+                                        <RecipeCreationEquipmentBox3
+                                            setShowAddNewEquipmentComponent={setShowAddNewEquipmentComponent}
+                                            setShowEditEquipmentAmount={setShowEditEquipmentAmount}
+                                            setIngredientToBeEdited={setIngredientToBeEdited}
+                                            recipeEquipmentList={recipeEquipmentList}
+                                            showAddEquipmentToList={showAddEquipmentToList}
+                                            setRecipeEquipmentList={setRecipeEquipmentList}
+                                            setShowAddEquipmentToList={setShowAddEquipmentToList}
+                                        />
+
+
+                                </IonList>
+
+
+                                <RecipeCreationIngredientsBox3
+                                    setShowEditIngredientAmount={setShowEditIngredientAmount}
+                                    setIngredientToBeEdited={setIngredientToBeEdited}
+                                    setIngredientToBeEditedArrPos={setIngredientToBeEditedArrPos}
+
+                                    setRecipeIngredientsList={setRecipeIngredientsList}
+                                    showAddIngredientToList={showAddIngredientToList}
+                                    setShowAddIngredientToList={setShowAddIngredientToList}
+                                    recipeIngredientsList={recipeIngredientsList}
+                                    setShowEditIngredientFacts={setShowEditIngredientFacts}
+                                    setRecipeCreationStep={setRecipeCreationStep}
+
+                                    ingredientToBeEdited={ingredientToBeEdited}
+                                    ingredientToBeEditedArrPos={ingredientToBeEditedArrPos}
+
+                                    searchAndAddIngredientToListStep={searchAndAddIngredientToListStep}
+                                    setSearchAndAddIngredientToListStep={setSearchAndAddIngredientToListStep}
+                                />
+                                <RecipeCreationAddOnsComponent
+                                recipeId={recipeId}
+                                />
+                            </div>
+                            <RecipeStepsList
+                                stepsListTextArray={stepsListTextArray}
+                                setStepsListTextArray={setStepsListTextArray}
+                            />
+
+                            <RecipeNutritionTotals
+                                recipeIngredientsList={recipeIngredientsList}
+                            />
+
+                        </IonCardContent>
+
+
+                    </div>
+                )
+                break;
+
+            case "Recipe Preview":
+                return(
+                    <div style={{
+                        // backgroundColor: "blue",
+                        height: "100%"
+
+                    }}>
+                        <div style={{
+                            // border: "solid",
+                            width:"fit-content",
+                            margin: "auto",
+
+                        }}>
+                            <IonIcon style={{fontSize: "24px",  color: "blue", cursor: "pointer"}} icon={recipePreviewIcon} />
+                            <IonIcon
+                                onClick={() => setRecipeCreationStep("Recipe Creation")}
+                                style={{fontSize: "24px", cursor: "pointer"}} icon={recipeCreationIcon} />
+                            <IonIcon icon={menuPageIcon}
+                                     style={{fontSize: "24px", cursor: "pointer"}}
+                                     onClick={() => setRecipeCreationStep("Recipe Menu Page")}
+                            />
+                        </div>
+
+                        <IonCard style={{
+                            height: "100%",
+                            width:"90%",
+                        }}>
+                            <IonCard style={{
+                                backgroundColor: "rgba(232,227,170,0.5)",
+
+                            }}>
+                                <IonCardHeader>
+                                    <IonCardTitle style={{textAlign:"center",
+                                    }}>
+                                        {recipeName}
+
+                                    </IonCardTitle>
+
+                                </IonCardHeader>
+
+                            </IonCard>
+                            <div  style={{textAlign: "center", margin: "1em"}}>
+                                <div>
+                                    Equipment List
+                                </div>
+                                {recipeEquipmentList.length > 0 && (
+                                    <div style={{
+                                        // width:"fit-content",
+                                        fontSize: ".6rem",
+                                        // height: "100%",
+                                        // flexWrap: "wrap",
+                                        zIndex: "0",
+                                        display: "flex",
+                                        // overflowX: "scroll",
+
+
+                                        padding: "0em",
+                                        flexDirection: "column",
+                                        // border:"solid yellow"
+                                    }}>
+                                            <div style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                textAlign: "center",
+                                            }}>
+                                                {recipeEquipmentList && recipeEquipmentList.map((data , i) => (
+                                                    <EquipmentListPreviewComponent
+                                                        data={data}
+                                                        key={i}
+                                                        />
+
+                                                ))}
+                                            </div>
+
+
+
+
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{textAlign:"center",
+                                margin:"1em",
+                            }}>
+                                <div>Ingredients List</div>
+
+                                {recipeIngredientsList.length > 0 && (
+                                    <div style={{
+                                        height: "fit-content",
+                                        // border: "solid blue",
+                                        // width:"fit-content",
+                                        fontSize: ".6rem",
+                                        // flexWrap: "wrap",
+                                        zIndex: "0",
+                                        display: "flex",
+                                        flexDirection: "column",
+
+
+                                    }}>
+
+
+
+                                            <div style={{display: "flex", flexDirection: "column"}}>
+                                                {recipeIngredientsList[0] && recipeIngredientsList.map((data, i) => (
+                                                    <IngredientListPreviewComponent
+                                                        data={data} key={i} index={i}
+                                                        recipeIngredientsList={recipeIngredientsList}
+                                                    />
+                                                ))}
+                                            </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <RecipePreviewStepsComponent
+                                    stepsListTextArray={stepsListTextArray}
+                                />
+                            </div>
+
+                            <div >
+                                {/*{renderSaveRecipeButton()}*/}
+                                <IonButton
+
+                                    disabled={disabled}
+                                    onClick={() => onSaveRecipeClick()}
+                                    color="secondary"
+                                    expand="block">Save Recipe</IonButton>
+
+                            </div>
+
+                        </IonCard>
+                    </div>
+                )
+            case "Recipe Menu Page":
+                return (
+                    <div>
+                        <div style={{
+                            // border: "solid",
+                            width:"fit-content",
+                            margin: "auto",
+
+                        }}>
+                            <IonIcon style={{fontSize: "24px", cursor: "pointer"}} icon={recipePreviewIcon}
+                                     onClick={() => setRecipeCreationStep("Recipe Preview")}
+                            />
+                            <IonIcon
+                                onClick={() => setRecipeCreationStep("Recipe Creation")}
+                                style={{fontSize: "24px", cursor: "pointer"}} icon={recipeCreationIcon} />
+                            <IonIcon icon={menuPageIcon}
+                                     style={{fontSize: "24px",  color: "blue", cursor: "pointer"}}
+                                     onClick={() => setRecipeCreationStep("Recipe Menu Page")}
+                            />
+                        </div>
+                        <MenuComboPage2 />
+
+                    </div>
+                )
 
 
 
@@ -465,17 +1314,121 @@ function CreateNewRecipe({}){
     )
 }
 
+function RecipePreviewStepsComponent({stepsListTextArray,  index}){
+
+
+    const [previewSteps, setPreviewSteps ] = useState([]);
+
+    useEffect(() => {
+        console.log(stepsListTextArray, previewSteps)
+        trimStepsListArr()
+    }, [])
+
+    function trimStepsListArr(){
+
+        let temp = stepsListTextArray;
+        let lastIndex = (temp.length - 1);
+        console.log(temp, lastIndex)
+
+        if ( temp[lastIndex] === "") {
+            temp.pop();
+            setPreviewSteps(temp)
+            console.log(temp)
+        }else {
+            setPreviewSteps(temp)
+        }
+    }
+
+
+    function renderPreviewSteps(){
+
+        return (
+            <div style={{
+                display:"flex",
+                flexDirection: "row",
+                overflowX:"scroll",
+                height: "100%",
+
+
+            }}>
+                {previewSteps?.map((step, i) => (
+                    <IonCard style={{minWidth:"90%",
+
+                        margin: "1em ",
+                        minHeight:"100%",
+
+                    }}>
+                        <div style={{
+                            height:"fit-content",
+                            width: "100%",
+                            border: "solid thin",
+                            display: "flex",
+                            overflowX: "scroll",
+                            backgroundColor: "rgba(232,227,170,0.5)",
+
+                        }}>
+                            {step.pictureUrlArray?.map((data, i) => (
+                                <div style={{margin: "1em"}}>
+                                    <img style={{
+                                        objectFit: "contain",
+                                        minWidth: "7em",
+                                        // padding: "1em",
+                                        maxHeight: "9em",
+
+                                    }} src={data} />
+                                </div>
+                            ))}
+                        </div>
+
+
+
+                        <IonCard>
+                            <IonCardContent>
+                                <div style={{
+                                    fontSize: ".8rem"
+                                }}>
+                                    {step.stepInputData}
+
+                                </div>
+                            </IonCardContent>
+                        </IonCard>
+                        <div style={{textAlign: "center",
+
+                            marginTop: "auto",
+                            // margin:"auto"
+                        }}>
+                            {i+ 1}/{stepsListTextArray.length}
+                        </div>
+                    </IonCard>
+                ))}
+            </div>
+
+
+        )
+    }
+    return (
+        <div>
+            {renderPreviewSteps()}
+        </div>
+    )
+}
 function RecipeCreationIngredientsBox3({
     setRecipeCreationStep,
                                             setShowEditIngredientFacts,
                                            recipeIngredientsList, setRecipeIngredientsList,
                                            showAddIngredientToList, setShowAddIngredientToList,
-                                           setIngredientToBeEdited,setShowEditIngredientAmount,
+                                           setIngredientToBeEditedArrPos, setIngredientToBeEdited,setShowEditIngredientAmount, ingredientToBeEdited,
+                                           ingredientToBeEditedArrPos,
+                                           searchAndAddIngredientToListStep, setSearchAndAddIngredientToListStep
+
                                        }){
 
     const [deletingIngredient, setDeletingIngredient ] = useState(false)
 
     const [showImage, setShowImage ] = useState(true)
+
+
+    const [ingredientsBoxStep, setIngredientsBoxStep ] = useState("")
 
     useEffect(() => {
 
@@ -488,108 +1441,146 @@ function RecipeCreationIngredientsBox3({
 
     function renderRecipeCreationIngredientsBox(){
 
-        if (showAddIngredientToList === true ){
+
+                if (showAddIngredientToList === true ){
 
 
-                return (
-                    <SearchAndAddIngredientToList3
-                        setShowAddIngredientToList={setShowAddIngredientToList}
-                        recipeIngredientsList={recipeIngredientsList}
-                        setRecipeIngredientsList={setRecipeIngredientsList}
-                        setShowEditIngredientFacts={setShowEditIngredientFacts}
-                    />
-                )
+                    return (
+                        <SearchAndAddIngredientToList3
+                            searchAndAddIngredientToListStep={searchAndAddIngredientToListStep}
+                            setSearchAndAddIngredientToListStep={setSearchAndAddIngredientToListStep}
+                            setShowAddIngredientToList={setShowAddIngredientToList}
+                            recipeIngredientsList={recipeIngredientsList}
+                            setRecipeIngredientsList={setRecipeIngredientsList}
+                            setShowEditIngredientFacts={setShowEditIngredientFacts}
+                        />
+                    )
 
 
 
-        }else {
-            return  (
-                <>
+                }else {
+                    return  (
+                        <>
 
-                    <IonButton onClick={() => setShowAddIngredientToList(true)}>
-                         + add Ingredient
-                    </IonButton>
-                </>
 
-            )
+                        </>
 
-        }
+                    )
+                }
     }
 
     function renderRecipeIngredientsList(){
-        return (
-            <div>
-                <div style={{ height: "fit-content",
-                    border:"solid blue",
-                    // width:"fit-content",
-                    fontSize: ".6rem",
-                    // flexWrap: "wrap",
-                    zIndex: "0",
-                    overflowX: "scroll",
-                    padding: "1em",
-                    display: "flex",
-                    flexDirection: "column",
+
+        switch (ingredientsBoxStep) {
+
+            case "":
+                return (
+                    <div>
+                        <div style={{margin: "auto",
+                            width: "fit-content",
+                            display: "flex"
+                        }}>
+
+                            <IonIcon
+                                onClick={() => setShowImage(false)}
+                                style={{
+                                    fontSize: "32px",
+                                    color: showImage === true ? ("black") : ("blue"),
+                                    cursor: "pointer",
+
+                                }} icon={listOutline}/>
+                            <IonIcon
+                                onClick={() => setShowImage(true)}
+                                style={{
+                                    fontSize: "32px",
+                                    cursor: "pointer",
+                                    color: showImage === true ? ("blue") : ("black")
+                                }} icon={imageOutline}/>
+                            <IonButton fill="outline" style={{width: "fit-content",
+
+                                height: "3em", fontSize: ".7rem"
+                            }} onClick={() => setShowAddIngredientToList(true)}>
+                                + Ingredient
+                            </IonButton>
+                        </div>
+
+                        {recipeIngredientsList.length > 0 && (
+                            <div style={{
+                                height: "fit-content",
+                                // border: "solid blue",
+                                // width:"fit-content",
+                                fontSize: ".6rem",
+                                // flexWrap: "wrap",
+                                zIndex: "0",
+                                overflowX: "scroll",
+                                padding: "1em",
+                                display: "flex",
+                                flexDirection: "column",
 
 
+                            }}>
 
-                }}>
 
-                    <div style={{margin:"auto",}}>
-                        <IonIcon
-                            onClick={() => setShowImage(false)}
-                            style={{
-                            fontSize:"32px",
-                                color: showImage === true ? ("black"):("blue"),
-                                cursor: "pointer",
+                                {showImage === true ? (
+                                    <div style={{display: "flex", flexDirection: "row"}}>
+                                        {recipeIngredientsList[0] && recipeIngredientsList.map((data, i) => (
+                                            <AddedIngredientDisplayComponent
+                                                data={data}
+                                                key={i}
+                                                i={i}
+                                                recipeIngredientsList={recipeIngredientsList}
+                                                setRecipeIngredientsList={setRecipeIngredientsList}
+                                                // setRecipeCreationStep={setRecipeCreationStep}
+                                                setIngredientToBeEdited={setIngredientToBeEdited}
+                                                setIngredientToBeEditedArrPos={setIngredientToBeEditedArrPos}
+                                                setSearchAndAddIngredientToListStep={setSearchAndAddIngredientToListStep}
+                                                setIngredientsBoxStep={setIngredientsBoxStep}
+                                                ingredientToBeEdited={ingredientToBeEdited}
+                                                ingredientToBeEditedArrPos={ingredientToBeEditedArrPos}
 
-                            }} icon={listOutline} />
-                        <IonIcon
-                            onClick={() => setShowImage(true)}
-                            style={{
-                            fontSize:"32px",
-                                cursor: "pointer",
-                            color: showImage === true ? ("blue"):("black")
-                        }} icon={imageOutline} />
-                    </div>
-                    {showImage === true ? (
-                        <div style={{ display:"flex", flexDirection: "row"}}>
-                            {recipeIngredientsList[0] && recipeIngredientsList.map((data , i) => (
-                                        <AddedIngredientDisplayComponent
-                                            data={data}
-                                            key={i}
-                                            index={i}
-                                            recipeEquipmentList={recipeIngredientsList}
-                                            setRecipeEquipmentList={setRecipeIngredientsList}
-                                        />
+                                            />
                                         ))}
-                            </div>
+                                    </div>
 
-                    ):(
-                                <div style={{display:"flex",  flexDirection: "column"}}>
-                                    {recipeIngredientsList[0] && recipeIngredientsList.map((data , i) => (
-                                        <AddedIngredientListComponent
+                                ) : (
+                                    <div style={{display: "flex", flexDirection: "column"}}>
+                                        {recipeIngredientsList[0] && recipeIngredientsList.map((data, i) => (
+                                            <AddedIngredientListComponent
                                                 data={data} key={i} index={i}
                                                 setShowEditIngredientAmount={setShowEditIngredientAmount}
                                                 setRecipeIngredientsList={setRecipeIngredientsList}
                                                 recipeIngredientsList={recipeIngredientsList}
                                                 setDeletingIngredient={setDeletingIngredient}
                                                 setIngredientToBeEdited={setIngredientToBeEdited}
-                                                setRecipeCreationStep={setRecipeCreationStep}
-                                        />
+                                                // setRecipeCreationStep={setRecipeCreationStep}
+                                            />
                                         ))}
-                                </div>
+                                    </div>
 
-                      )}
+                                )}
 
+                            </div>
+                        )}
 
-                <div>
-                    <IonIcon icon={eyeOutline} />
-                </div>
+                    </div>
+                )
+            case "edit ingredient":
+                console.log(ingredientsBoxStep)
 
-            </div>
-            </div>
+            return (
+            <EditIngredientAmount2
+                setSearchAndAddIngredientToListStep={setSearchAndAddIngredientToListStep}
+                recipeIngredientsList={recipeIngredientsList}
+                setRecipeIngredientsList={setRecipeIngredientsList}
+                setShowAddIngredientToList={setShowAddIngredientToList}
+                ingredientToBeEdited={ingredientToBeEdited}
+                ingredientToBeEditedArrPos={ingredientToBeEditedArrPos}
+                setIngredientsBoxStep={setIngredientsBoxStep}
 
-        )
+            />
+            )
+        }
+
     }
 
     return (
@@ -611,7 +1602,7 @@ function RecipeCreationIngredientsBox3({
 function SearchAndAddIngredientToList3({
    setShowAddNewIngredientComponent,setShowEditIngredientFacts,showEditIngredientFacts,
    recipeIngredientsList,setRecipeIngredientsList,showAddIngredientToList, setAddingToFirebase, addingToFirebase,
-   setShowAddIngredientToList,
+   setShowAddIngredientToList,searchAndAddIngredientToListStep, setSearchAndAddIngredientToListStep,
                                        }){
 
 
@@ -624,7 +1615,6 @@ function SearchAndAddIngredientToList3({
     const [ editIngredientDocId, setEditIngredientDocId ] = useState("")
 
     const [ deleting, setDeleting ] = useState(false)
-    const [ searchAndAddIngredientToListStep, setSearchAndAddIngredientToListStep ] = useState("Ingredient Search")
 
     const [ingredientToBeDeleted, setIngredientToBeDeleted ] = useState("")
     const [ingredientToBeEdited , setIngredientToBeEdited ] = useState("")
@@ -716,7 +1706,7 @@ function SearchAndAddIngredientToList3({
 
 
                     return (
-                        <IonCard>
+                        <IonCard style={{width: "fit-content", margin: "auto"}}>
                             <div
                                 style={{
                                     position: "absolute",
@@ -735,10 +1725,8 @@ function SearchAndAddIngredientToList3({
                                 </IonCardTitle>
                             </IonCardHeader>
 
-                            <IonCardContent >
+                            <IonCardContent style={{ padding: 0,}} >
                                 <IonCard  style={{
-                                    // backgroundColor: "red",
-                                    padding: ".1em",
                                     display: "flex",
                                     justifyContent: "space-around",
                                     // width: "100%",
@@ -895,17 +1883,17 @@ function SearchAndAddIngredientToList3({
                 )
             break;
 
-            case "Edit Ingredient Amount":
-                return (
-                    <EditIngredientAmount
-                        showAddIngredientAmount={showAddIngredientAmount}
-                        ingredientToBeAdded={ingredientToBeAdded}
-                        setSearchAndAddIngredientToListStep={setSearchAndAddIngredientToListStep}
-                        recipeIngredientsList={recipeIngredientsList}
-                        setRecipeIngredientsList={setRecipeIngredientsList}
-                        setShowAddIngredientToList={setShowAddIngredientToList}
-                    />
-                )
+            // case "Edit Ingredient Amount":
+            //     return (
+            //         <EditIngredientAmount
+            //             showAddIngredientAmount={showAddIngredientAmount}
+            //             ingredientToBeAdded={ingredientToBeAdded}
+            //             setSearchAndAddIngredientToListStep={setSearchAndAddIngredientToListStep}
+            //             recipeIngredientsList={recipeIngredientsList}
+            //             setRecipeIngredientsList={setRecipeIngredientsList}
+            //             setShowAddIngredientToList={setShowAddIngredientToList}
+            //         />
+            //     )
         }
 
     }
@@ -1291,9 +2279,13 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
 
     return (
         <div>
-            <div  style={{display: "flex", justifyContent: "space-between", fontSize:"1rem", }}>
+            <div  style={{display: "flex", justifyContent: "space-between", fontSize:".6rem",
+                borderTop: "solid thin",
+                borderRight: "solid thin",
+                borderLeft: "solid thin",
+            }}>
                 <div >
-                    - {data.ingredientName} ( {data.ingredientAmount} {data.gramsOrCups} )
+                    {data.ingredientName} ( {data.ingredientAmount} {data.gramsOrCups} )
                 </div >
 
                 <div
@@ -1304,14 +2296,14 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
                         width:"fit-content"
                     }}
                 >
-                    <IonIcon onClick={() => setShowInventory(!showInventory)}
-                             style={{ zIndex:"10", fontSize: "32px",
+                    <IonIcon  onClick={() => setShowInventory(!showInventory)}
+                             style={{ zIndex:"10", fontSize: "16px",
                                  color: showInventory === true ? ("blue") : ("black"),
                              }} icon={inventoryIcon}
 
                     />
-                    <IonIcon onClick={() => onEditIconClick()} style={{ zIndex:"10",fontSize: "32px"}} icon={editIcon}/>
-                    <IonIcon onClick={() => onDeleteIconClick()} style={{ zIndex:"10", fontSize: "32px"}} icon={deleteIcon}/>
+                    <IonIcon size="medium" onClick={() => onEditIconClick()} style={{ zIndex:"10",fontSize: "16px"}} icon={editIcon}/>
+                    <IonIcon size="medium" onClick={() => onDeleteIconClick()} style={{ zIndex:"10", fontSize: "16px"}} icon={deleteIcon}/>
 
                 </div>
             </div>
@@ -1319,20 +2311,29 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
 
             {showInventory && (
                 <div style={{
-                    backgroundColor:"rgba(195,255,255,0.18)",
+                    borderLeft:"solid thin",
+                    borderRight:"solid thin",
+                    borderBottom:"solid thin",
+                    // backgroundColor: "blue"
+
                 }}>
                     <div style={{
-                        fontSize: "1.2rem",
-                        textAlign: "center"
+                        fontSize: ".8rem",
+                        textAlign: "center",
+                        backgroundColor:"rgb(255,249,187)",
+
                     }}>
                         Inventory Data
                     </div>
                     <div>
 
-                        <div>
+                        <div style={{
+                            fontSize: ".6rem"
+
+                        }}>
                             <div
                                 style={{display: "flex",
-                                    textAlign: "center"
+                                    textAlign: "center",
                                 }}
                             >
 
@@ -1342,7 +2343,7 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
                                     style={{
                                         border: "solid thin",
                                         width: "5em",
-                                        fontSize: "1rem"
+                                        // fontSize: "1rem"
                                     }}>
                                     Amount
                                 </div>
@@ -1350,7 +2351,7 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
                                     style={{
                                         border: "solid thin",
                                         width: "5em",
-                                        fontSize: "1rem"
+                                        // fontSize: "1rem"
                                     }}>
                                     Price
                                 </div>
@@ -1358,7 +2359,7 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
                                     style={{
                                         border: "solid thin",
                                         width: "5em",
-                                        fontSize: "1rem"
+                                        // fontSize: "1rem"
                                     }}>
                                     Avg Price
 
@@ -1367,7 +2368,7 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
                                     style={{
                                         border: "solid thin",
                                         width: "5em",
-                                        fontSize: "1rem"
+                                        // fontSize: "1rem"
                                     }}>
                                     Date
                                 </div>
@@ -1375,7 +2376,7 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
                                     style={{
                                         border: "solid thin",
                                         width: "6em",
-                                        fontSize: "1rem"
+                                        // fontSize: "1rem"
                                     }}>
                                     Source
                                 </div>
@@ -1390,13 +2391,12 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
 
 
 
-                                <div>
+                                <div >
                                     {loadedIngredient.inventory?.map((item, i) =>(
                                         <div style={{
                                             display: "flex",
                                             // flexDirection: "column",
                                             flexWrap: "wrap",
-                                            fontSize: "1rem",
                                             textAlign: "center",
 
                                         }}>
@@ -1406,13 +2406,26 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
                                                     width: "4em",
                                                 }}>
                                                 {item.ingredientInventoryAmount}  {item.lbsOzItemsGrams}
+                                                <div
+                                                    style={{
+                                                        // border: "solid",
+                                                        width: "fit-content",
+                                                        // fontSize: "1.2rem"
+                                                    }}>
+                                                    <IonIcon size="large"
+                                                             onClick={() => onEditIconClick(data)}
+                                                             style={{ zIndex:"10",
+                                                                 cursor: "pointer",
+                                                                 color: "black"
+                                                             }} icon={editIcon}/>
+                                                </div>
                                             </div>
 
                                             <div
                                                 style={{
                                                     border: "solid thin",
                                                     width: "4em",
-                                                    fontSize: ".9rem",
+                                                    // fontSize: ".9rem",
 
                                                 }}>
                                                 {item.pricePerUnit}  {item.pricePerUnitLabel}
@@ -1435,7 +2448,7 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
                                                 style={{
                                                     border: "solid thin",
                                                     width: "4em",
-                                                    fontSize: ".9rem",
+                                                    // fontSize: ".9rem",
 
                                                 }}>
                                                 <div>{item.source}</div>
@@ -1444,18 +2457,7 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
                                                 </div>
                                             </div>
 
-                                            <div
-                                                style={{
-                                                    // border: "solid",
-                                                    width: "fit-content",
-                                                    fontSize: "1.2rem"
-                                                }}>
-                                                <IonIcon size="large"
-                                                         onClick={() => onEditIconClick(data)}
-                                                         style={{ zIndex:"10",
-                                                             cursor: "pointer"
-                                                         }} icon={editIcon}/>
-                                            </div>
+
                                             <div>
                                                 {/*{renderPriceFacts()}*/}
 
@@ -1482,14 +2484,222 @@ function AddedIngredientListComponent({data, setRecipeIngredientsList, setDeleti
     )
 
 }
+
+function IngredientListPreviewComponent({data,  recipeIngredientsList,
+                                          index}){
+
+
+
+    let newData;
+
+    const [loadedIngredient, setLoadedIngredient ] = useState(undefined)
+    const [showInventory, setShowInventory] = useState(false)
+    let loadedIngredientInventoryData
+
+    const [averagePriceArray, setAveragePriceArray ] = useState(undefined)
+
+    function renderPriceFacts() {
+        function renderInventoryTotals(){
+
+            let priceTotal = 0;
+            let amountTotal = 0;
+            loadedIngredient.inventory.map((x,i) => {
+
+                priceTotal = priceTotal + parseFloat(x.pricePerUnit)
+                amountTotal = amountTotal + parseFloat(x.ingredientInventoryAmount)
+            })
+            console.log(priceTotal, amountTotal)
+
+            return (priceTotal/amountTotal).toFixed(3)
+
+        }
+        console.log(loadedIngredient)
+
+        if (loadedIngredient.inventory !== undefined ){
+            console.log(loadedIngredient, " <======loaded Ingredient!!!!")
+            if (loadedIngredient.inventory[0] !== "" ){
+                console.log(loadedIngredientInventoryData)
+                let avgPriceArray = [];
+
+                let pricePer;
+                loadedIngredient.inventory.map(inv => {
+                    console.log(inv)
+                    switch (inv.lbsOzItemsGrams) {
+
+                        case "items":
+                            pricePer = ( parseFloat(inv.pricePerUnit) / parseInt(inv.ingredientInventoryAmount)  )
+
+                            console.log(pricePer)
+                            break;
+                        case "lbs":
+
+                            break;
+                        case "ounces":
+
+                            break;
+                        case "grams":
+
+                            break;
+
+                    }
+                    avgPriceArray = [...avgPriceArray, pricePer]
+                })
+                console.log(avgPriceArray, "XXXXXX__AVG_PRICE_ARRAY__XXXXXX")
+                setAveragePriceArray(avgPriceArray)
+
+                return (
+                    <IonCard style={{
+                        width: "20em",
+                        textAlign: "center"
+                    }}>
+                        <div>
+                            Inventory
+                        </div>
+                        <div style={{
+                            display: "flex",
+                            flexDirection: "column"
+                        }}>
+                            <div style={{
+                                display: "flex"
+                            }}>
+                                <div style={{
+                                    border: "solid thin",
+                                    paddingRight: ".2em"
+                                }}>Amount</div>
+                                <div>Price</div>
+                                <div>Avg Price</div>
+                                <div>Source</div>
+                            </div>
+                            {averagePriceArray !== undefined && loadedIngredient.inventory.map((x,i) => (
+                                <div style={{
+                                    display: "flex"
+                                }}>
+                                    <div style={{
+                                        border: "solid",
+                                        paddingRight: ".2em"
+                                    }}>{x.ingredientInventoryAmount} {x.lbsOzItemsGrams}</div>
+                                    <div>@${x.pricePerUnit}</div>
+                                    <div>${avgPriceArray[i]}</div>
+                                    <div>{x.source} {x.sourceCrossStreets}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <div>Avg Price {renderInventoryTotals()} per {loadedIngredient.inventory[0].lbsOzItemsGrams}</div>
+
+
+
+                    </IonCard>
+                )
+
+            }
+
+        }
+
+
+
+
+
+
+    }
+
+
+
+    useEffect(() => {
+        if(loadedIngredient === undefined ){
+            console.log("?LOADED INGREDIENT UseEffect!!!XXX__")
+            loadIngredientsInventory()
+
+        }else{
+            console.log("Ingredient XXX == ", loadedIngredient)
+        }
+    },[showInventory])
+
+    function renderInventoryTotals2(){
+
+        let priceTotal = 0;
+        let amountTotal = 0;
+        loadedIngredient.inventory.map((x,i) => {
+
+            priceTotal = priceTotal + parseFloat(x.pricePerUnit)
+            amountTotal = amountTotal + parseFloat(x.ingredientInventoryAmount)
+        })
+        console.log(priceTotal, amountTotal)
+
+        return (priceTotal/amountTotal).toFixed(2)
+
+    }
+
+    async function loadIngredientsInventory(){
+        console.log("loading Inventory")
+
+        let inventory = [];
+        let tempArr = [];
+
+        loadedIngredientInventoryData = await loadAnyCollectionData(`ingredients-collection/${data.docId}/inventory`)
+
+        loadedIngredientInventoryData.docs.map(inventoryDoc => {
+            // console.log(doc.ingredientName,doc.docId,
+               console.log(inventoryDoc.data())
+            inventory = [...inventory, inventoryDoc.data()]
+        })
+        if (inventory.length  > 0 ){
+            console.log(inventory)
+            newData = {...data, inventory}
+            console.log(newData)
+            tempArr = {...recipeIngredientsList}
+            tempArr[index] = {...newData}
+            console.log(newData,"<== loadedIngredient XXXXXXX")
+            // setRecipeIngredientsList(tempArr)
+            setLoadedIngredient(newData)
+
+        }else {
+            console.log(data,"<== loadedIngredient XXXXXXX")
+
+            setLoadedIngredient(data)
+
+        }
+    }
+
+
+    return (
+        <div style={{ marginTop: "1em"}}>
+            <div  style={{display: "flex", justifyContent: "space-between", fontSize:".7rem",
+
+            }}>
+                <div >
+                    {data.ingredientName} ( {data.ingredientAmount} {data.gramsOrCups} )
+                </div >
+
+                <div
+                    style={{
+                        // backgroundColor: "red",
+                        display: "flex",
+                        // justifyContent: "space-around",
+                        width:"fit-content"
+                    }}
+                >
+
+
+                </div>
+            </div>
+
+
+        </div>
+
+    )
+
+}
 function RecipeCreationEquipmentBox3({
                                          setShowEditEquipmentAmount,
-                                         setEquipmentToBeEdited, setShowAddNewEquipmentComponent,
+                                         setShowAddNewEquipmentComponent,
                                          recipeEquipmentList, setRecipeEquipmentList,
                                          showAddEquipmentToList, setShowAddEquipmentToList,
                                      }){
 
     const [deletingEquipment, setDeletingEquipment ] = useState(false)
+    const [equipmentToBeEdited, setEquipmentToBeEdited ] = useState([])
+    const [equipmentToBeEditedArrPos, setEquipmentToBeEditedArrPos ] = useState(undefined)
+
 
     const [showImage, setShowImage ] = useState(false)
 
@@ -1499,8 +2709,8 @@ function RecipeCreationEquipmentBox3({
         // if (deletingEquipment === true){
         //     setDeletingEquipment(false)
         // }
-        console.log("recipeEquipmentBox useEffect")
-    }, [recipeEquipmentList ])
+        console.log("recipeEquipmentBox useEffect", equipmentToBeEdited)
+    }, [recipeEquipmentList, equipmentToBeEdited ])
 
 
     function renderRecipeCreationEquipmentBox(){
@@ -1517,63 +2727,125 @@ function RecipeCreationEquipmentBox3({
         } else {
             return (
                 <div >
-                    <div style={{
-                        // width:"fit-content",
-                        fontSize: ".6rem", height: "fit-content",
-                        // flexWrap: "wrap",
-                        zIndex: "0",
-                        display: "flex",
-                        overflowX: "scroll",
 
-                        padding: "2em",
-                        flexDirection: "column",border:"solid yellow"
-                    }}>
-                        <div style={{
-                            margin:"auto",
-                        }}>
-                            <IonIcon
-                                onClick={() => setShowImage(false)}
-                                style={{
-                                    fontSize:"32px",
-                                    color: showImage === true ? ("black"):("blue"),
-                                    cursor: "pointer",
+                    {/*<IonIcon style={{fontSize: "28px"}} icon={addIngredientIcon} />*/}
+                    {equipmentToBeEditedArrPos !== undefined ? (<div>
+                        <EditEquipmentAmount
+                        setEquipmentToBeEditedArrPos={setEquipmentToBeEditedArrPos}
+                        recipeEquipmentList={recipeEquipmentList}
+                        setRecipeEquipmentList={setRecipeEquipmentList}
+                        equipmentToBeEditedArrPos={equipmentToBeEditedArrPos}
+                        equipmentToBeEdited={equipmentToBeEdited}
+                        />
+                    </div>):(
+                        <div>
+                            <div style={{
+                                margin:"auto",
+                                width: "fit-content",
+                                // backgroundColor: "blue",
+                                display:"flex"
 
-                                }} icon={listOutline} />
-                            <IonIcon
-                                onClick={() => setShowImage(true)}
-                                style={{
-                                    fontSize:"32px",
-                                    cursor: "pointer",
-                                    color: showImage === true ? ("blue"):("black")
-                                }} icon={imageOutline} />
+                            }}>
+                                <IonIcon
+                                    onClick={() => setShowImage(false)}
+                                    style={{
+                                        fontSize:"32px",
+                                        color: showImage === true ? ("black"):("blue"),
+                                        cursor: "pointer",
+
+                                    }} icon={listOutline} />
+                                <IonIcon
+                                    onClick={() => setShowImage(true)}
+                                    style={{
+                                        fontSize:"32px",
+                                        cursor: "pointer",
+                                        color: showImage === true ? ("blue"):("black")
+                                    }} icon={imageOutline} />
+                                <div style={{
+                                    // backgroundColor: "red",
+                                    width: "fit-content"
+                                }}>
+                                    <IonButton fill="outline" style={{width: "100%", height:"3em", fontSize:".7rem",
+
+                                    }} onClick={() => setShowAddEquipmentToList(true)}>
+                                        + Equipment
+                                    </IonButton>
+                                </div>
+
+                            </div>
+                            {recipeEquipmentList.length > 0 && (
+                                <div style={{
+                                    // width:"fit-content",
+                                    fontSize: ".6rem", height: "fit-content",
+                                    // flexWrap: "wrap",
+                                    zIndex: "0",
+                                    display: "flex",
+                                    overflowX: "scroll",
+
+                                    padding: "0em",
+                                    flexDirection: "column",border:"solid yellow"
+                                }}>
+                                    {showImage ? (
+                                        <div style={{
+                                            display: "flex",
+                                            flexDirection: "row",
+                                        }}>
+                                            {recipeEquipmentList && recipeEquipmentList.map((data , i) => (
+                                                // <AddedEquipmentListComponent3
+                                                //     data={data}
+                                                //     key={i}
+                                                //     index={i}
+                                                //     setShowEditEquipmentAmount={setShowEditEquipmentAmount}
+                                                //     setEquipmentToBeEdited={setEquipmentToBeEdited}
+                                                //     setRecipeEquipmentList={setRecipeEquipmentList}
+                                                //     recipeEquipmentList={recipeEquipmentList}
+                                                //     setDeletingEquipment={setDeletingEquipment}/>
+                                                <AddedEquipmentDisplayComponent
+                                                    data={data}
+                                                    i={i}
+                                                    setRecipeEquipmentList={setRecipeEquipmentList}
+                                                    recipeEquipmentList={recipeEquipmentList}
+                                                />
+                                            ))}
+                                        </div>
+                                    ):(
+                                        <div style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                        }}>
+                                            {recipeEquipmentList && recipeEquipmentList.map((data , i) => (
+                                                // <div>List component</div>
+                                                <AddedEquipmentListComponent3
+                                                    data={data}
+                                                    key={i}
+                                                    index={i}
+                                                    setShowEditEquipmentAmount={setShowEditEquipmentAmount}
+                                                    setEquipmentToBeEdited={setEquipmentToBeEdited}
+                                                    setRecipeEquipmentList={setRecipeEquipmentList}
+                                                    recipeEquipmentList={recipeEquipmentList}
+                                                    setEquipmentToBeEditedArrPos={setEquipmentToBeEditedArrPos}
+
+                                                    setDeletingEquipment={setDeletingEquipment}/>
+                                                // <AddedEquipmentDisplayComponent
+                                                //     data={data}
+                                                //     i={i}
+                                                //     setRecipeEquipmentList={setRecipeEquipmentList}
+                                                //     recipeEquipmentList={recipeEquipmentList}
+                                                // />
+                                            ))}
+                                        </div>
+                                    )}
+
+
+
+                                </div>
+                            )}
+
                         </div>
-                        <div style={{
-                            display: "flex",
-                            flexDirection: "row",
-                        }}>
-                            {recipeEquipmentList && recipeEquipmentList.map((data , i) => (
-                                // <AddedEquipmentListComponent3
-                                //     data={data}
-                                //     key={i}
-                                //     index={i}
-                                //     setShowEditEquipmentAmount={setShowEditEquipmentAmount}
-                                //     setEquipmentToBeEdited={setEquipmentToBeEdited}
-                                //     setRecipeEquipmentList={setRecipeEquipmentList}
-                                //     recipeEquipmentList={recipeEquipmentList}
-                                //     setDeletingEquipment={setDeletingEquipment}/>
-                                <AddedEquipmentDisplayComponent
-                                    data={data}
-                                    i={i}
-                                    setRecipeEquipmentList={setRecipeEquipmentList}
-                                    recipeEquipmentList={recipeEquipmentList}
-                                />
-                            ))}
-                        </div>
 
-                    </div>
-                    <IonButton style={{width: "100%"}} onClick={() => setShowAddEquipmentToList(true)}>
-                        + Add Equipment
-                    </IonButton>
+                    )}
+
+
 
 
 
@@ -1585,7 +2857,8 @@ function RecipeCreationEquipmentBox3({
     }
 
     return (
-        <div style={{ width: "100%", height: "fit-content", }}>
+        <div style={{ width: "100%", height: "fit-content",
+        }}>
 
 
 
@@ -1682,12 +2955,18 @@ showAddIngredientAmount, setShowAddIngredientAmount,setIngredientToBeDeleted,
 
     return (
         <IonCard
-                 // style={{
+                 style={{
             // backgroundColor: "red",
             // cursor: "pointer"}}>
+                     padding: 0,
+                     width: "70%"
+
+                 }}
             >
             <IonCardContent>
                 <div style={{display: "flex",
+                    padding: 0,
+                    flexDirection: "column"
                     }}>
 
                     <div
@@ -1702,7 +2981,12 @@ showAddIngredientAmount, setShowAddIngredientAmount,setIngredientToBeDeleted,
                         <div style={{width: "15em",
                             margin: "auto"
                         }}>
-                            <img src={data.imgUrl} />
+                            <img style={{
+                                objectFit: "contain",
+                                height: "12em",
+                                width: "50%"
+
+                            }} src={data.imgUrl} />
                         </div>
                         {ingredientSearchNutritionFacts && (
                             <IngredientsSearchItemNutritionFacts
@@ -1972,14 +3256,14 @@ function IngredientsSearchItemNutritionFacts({ingredientSearchNutritionFacts}){
                 <div
                     style={{
                         border: "solid",
-                        width: "20em",
+                        width: "15em",
                         padding: ".25em",
                         opacity: "1",
                     }}
                 >
 
                     <div style={{
-                        fontSize: "1.5rem",
+                        fontSize: "1rem",
                         fontWeight: "bold",
                         padding: "0",
                         // border:"solid",
@@ -1987,7 +3271,7 @@ function IngredientsSearchItemNutritionFacts({ingredientSearchNutritionFacts}){
                     }}>Nutrition Facts</div>
 
                     <div  style={{
-                        fontSize: "1rem",
+                        fontSize: ".8rem",
                         fontWeight: "bold",
                         display:"flex",
                         padding: 0,
@@ -2025,7 +3309,7 @@ function IngredientsSearchItemNutritionFacts({ingredientSearchNutritionFacts}){
                                 display: "flex",
 
                                 justifyContent: "space-between",
-                                fontSize: "1.5rem",
+                                fontSize: "1.2rem",
                                 fontWeight: "900",
                                 flexDirection: "row",
                                 width: "100%",
@@ -2316,7 +3600,8 @@ function EditIngredientAmount({recipeIngredientsList, setRecipeIngredientsList,
             </IonCardHeader>
             <IonCardContent>
                 <div style={{ width: "fit-content", margin: "auto", display: "flex"}}>
-                    <input className="add-ingredient-amount-card-input" value={ingredientAmount} type="number" onChange={(e) => {setIngredientAmount(e.target.value)}}/>
+                    <input style={{width: "6em"}} value={ingredientAmount}
+                           type="number" onChange={(e) => {setIngredientAmount(e.target.value)}}/>
                     <IonSelect
                         onIonChange={(e) => setGramsOrCups(e.target.value)}
                         placeholder="g/cups">
@@ -2340,6 +3625,199 @@ function EditIngredientAmount({recipeIngredientsList, setRecipeIngredientsList,
             </IonCardContent>
         </IonCard>
     )
+}
+
+function EditIngredientAmount2({recipeIngredientsList, setRecipeIngredientsList,
+                                  setShowAddIngredientToList, ingredientToBeEditedArrPos, ingredientToBeEdited,
+                                  setIngredientsBoxStep}) {
+
+    const [ingredientAmount, setIngredientAmount ] = useState(ingredientToBeEdited.ingredientAmount)
+
+    const [ gramsOrCups, setGramsOrCups ] = useState(ingredientToBeEdited.gramsOrCups)
+
+    const [buttonEnabled, setButtonEnabled ] = useState(false)
+
+    useEffect(() =>{
+        if ( gramsOrCups !== undefined && ingredientAmount > 0){
+            setButtonEnabled(true)
+            console.log("Setting Button True")
+        }else{
+            setButtonEnabled(false)
+            console.log("Setting Button False")
+
+        }
+    },[gramsOrCups, buttonEnabled, ingredientAmount, ingredientToBeEdited])
+
+
+    console.log(ingredientToBeEdited)
+
+    function onSaveIngredientToList(){
+        let temp = recipeIngredientsList;
+        ingredientToBeEdited.ingredientAmount = ingredientAmount;
+        temp[ingredientToBeEditedArrPos] = ingredientToBeEdited;
+        console.log(temp, ingredientToBeEdited)
+        setRecipeIngredientsList([...temp])
+        setIngredientsBoxStep("")
+
+
+
+    }
+
+    function renderAddIngredientAmount(){
+
+        if (ingredientToBeEdited !== undefined)
+        return (
+            <IonCard style={{width: "100%", height: "fit-content"}}>
+                <IonCardHeader style={{textAlign: "center"}}>
+                    <IonCardTitle>How much ?</IonCardTitle>
+                    <IonCard style={{margin: "1em auto", width: "fit-content"}}>
+                        <IonCardContent style={{padding: ".5em"}}>
+                            <IonCardTitle color="primary">
+                                {ingredientToBeEdited.ingredientName}
+                            </IonCardTitle>
+                            <div style={{height:"5em"}}>
+                                <img style={{
+                                    objectFit: "contain",
+                                    width: "12em",
+                                    margin: "auto",
+                                    height: "4em",
+                                }} src={ingredientToBeEdited.imgUrl} alt="ingredient-image" />
+                            </div>
+                        </IonCardContent>
+                    </IonCard>
+
+                </IonCardHeader>
+                <IonCardContent>
+                    <div style={{ width: "fit-content", margin: "auto", display: "flex"}}>
+                        <input style={{width: "6em"}} value={ingredientAmount}
+                               type="number" onChange={(e) => {setIngredientAmount(e.target.value)}}/>
+                        <IonSelect
+                            onIonChange={(e) => setGramsOrCups(e.target.value)}
+                            placeholder="g/cups">
+                            <IonSelectOption >item</IonSelectOption>
+                            <IonSelectOption >grams</IonSelectOption>
+                            <IonSelectOption >cups</IonSelectOption>
+                            <IonSelectOption>tsp</IonSelectOption>
+                            <IonSelectOption>tbsp</IonSelectOption>
+                        </IonSelect>
+                    </div>
+                    <div style={{
+                        // border:"solid",
+                        display:"flex",
+                        justifyContent: "space-between",
+                        width:"fit-content",
+                        margin: " 1em auto",
+                    }}>
+                        <IonButton onClick={() => setIngredientsBoxStep("")} color="danger" >cancel</IonButton>
+                        <IonButton onClick={() => onSaveIngredientToList()} disabled={!buttonEnabled} color="secondary"  >save</IonButton>
+                    </div>
+                </IonCardContent>
+            </IonCard>
+        )
+    }
+
+    return (
+        <div>
+            {renderAddIngredientAmount()}
+        </div>
+    )
+
+}
+
+function EditEquipmentAmount({recipeEquipmentList, setRecipeEquipmentList,
+                                   equipmentToBeEditedArrPos, equipmentToBeEdited, setEquipmentToBeEditedArrPos,
+                                  // setEquipmentBoxStep
+
+}) {
+
+    const [equipmentAmount, setEquipmentAmount ] = useState(equipmentToBeEdited.equipmentAmount)
+
+    // const [ gramsOrCups, setGramsOrCups ] = useState(ingredientToBeEdited.gramsOrCups)
+
+    const [buttonEnabled, setButtonEnabled ] = useState(false)
+
+    useEffect(() =>{
+        if (  equipmentAmount > 0){
+            setButtonEnabled(true)
+            console.log("Setting Button True")
+        }else{
+            setButtonEnabled(false)
+            console.log("Setting Button False")
+
+        }
+    },[
+        buttonEnabled,
+        equipmentAmount,
+        equipmentToBeEdited
+    ])
+
+
+    console.log(equipmentToBeEdited)
+
+    function onSaveEquipmentAmount(){
+        let temp = recipeEquipmentList;
+        equipmentToBeEdited.equipmentAmount = equipmentAmount;
+        temp[equipmentToBeEditedArrPos] = equipmentToBeEdited;
+        console.log(temp, equipmentToBeEdited)
+        setRecipeEquipmentList([...temp])
+        // setEquipmentBoxStep("")
+        setEquipmentToBeEditedArrPos(undefined)
+
+
+
+    }
+
+    function renderEditEquipmentAmount(){
+
+        if (equipmentToBeEdited !== undefined)
+            console.log(equipmentToBeEdited)
+        return (
+            <IonCard style={{width: "100%", height: "fit-content"}}>
+                <IonCardHeader style={{textAlign: "center"}}>
+                    <IonCardTitle>How much ?</IonCardTitle>
+                    <IonCard style={{margin: "1em auto", width: "fit-content"}}>
+                        <IonCardContent style={{padding: ".5em"}}>
+                            <IonCardTitle color="primary">
+                                {equipmentToBeEdited.equipmentName}
+                            </IonCardTitle>
+                            <div style={{height:"5em"}}>
+                                <img style={{
+                                    objectFit: "contain",
+                                    width: "12em",
+                                    margin: "auto",
+                                    height: "4em",
+                                }} src={equipmentToBeEdited.imgUrl} alt="ingredient-image" />
+                            </div>
+                        </IonCardContent>
+                    </IonCard>
+
+                </IonCardHeader>
+                <IonCardContent>
+                    <div style={{ width: "fit-content", margin: "auto", display: "flex"}}>
+                        <input style={{width: "8em"}} value={equipmentAmount}
+                               type="number" onChange={(e) => {setEquipmentAmount(e.target.value)}}/>
+                    </div>
+                    <div style={{
+                        // border:"solid",
+                        display:"flex",
+                        justifyContent: "space-between",
+                        width:"fit-content",
+                        margin: " 1em auto",
+                    }}>
+                        <IonButton onClick={() => setEquipmentToBeEditedArrPos(undefined)} color="danger" >cancel</IonButton>
+                        <IonButton onClick={() => onSaveEquipmentAmount()} disabled={!buttonEnabled} color="secondary"  >save</IonButton>
+                    </div>
+                </IonCardContent>
+            </IonCard>
+        )
+    }
+
+    return (
+        <div>
+            {renderEditEquipmentAmount()}
+        </div>
+    )
+
 }
 function AddIngredientAmount3({
                                   recipeIngredientsList, setRecipeIngredientsList,
@@ -2409,7 +3887,7 @@ function AddIngredientAmount3({
             </IonCardHeader>
             <IonCardContent>
                 <div style={{ width: "fit-content", margin: "auto", display: "flex"}}>
-                    <input className="add-ingredient-amount-card-input" value={ingredientAmount} type="number" onChange={(e) => {setIngredientAmount(e.target.value)}}/>
+                    <input style={{width: "6em"}} value={ingredientAmount} type="number" onChange={(e) => {setIngredientAmount(e.target.value)}}/>
                     <IonSelect
                         onIonChange={(e) => setGramsOrCups(e.target.value)}
                         placeholder="g/cups">
@@ -2577,7 +4055,9 @@ function EditEquipment({setEquipmentComponentStep,
         };
 
         return (
-            <IonCard>
+            <IonCard
+
+            >
                 <IonCardHeader style={{textAlign: "center"}}>
                     <div
                         style={{
@@ -3560,7 +5040,7 @@ function AddIngredientNutritionalFacts({
 
     return (
         <div>
-            <IonCard style={{overflowY: "scroll", height: "40em"}}>
+            <IonCard style={{overflowY: "scroll",overflowX: "scroll", height: "40em"}}>
                 <div
                     onClick={onCloseClick}
 
@@ -3576,7 +5056,7 @@ function AddIngredientNutritionalFacts({
                         Add New Ingredient Nutritional Facts
                     </IonCardTitle>
                 </IonCardHeader>
-                <IonCardContent className="add-ingredient-card-content" >
+                <IonCardContent  >
                     <div className="add-ingredient-label-and-input-container">
                         <label className="add-ingredient-label">Ingredient Name: </label>
                         <input className="add-ingredient-name-card-input" value={ingredientName} type="text" onChange={(e) => {setIngredientName(e.target.value)}}/>
@@ -3991,7 +5471,6 @@ function SearchAndAddEquipmentToList3({
     const [inputState, setInputState] = useState("")
     const [equipmentToBeAdded, setEquipmentToBeAdded] = useState(undefined)
     const [showAddEquipmentAmount, setShowAddEquipmentAmount] = useState(false)
-    // const [equipmentToBeRemovedFromList, setEquipmentToBeRemodFromList] = useState(undefined)
 
 
 
@@ -4073,10 +5552,6 @@ function SearchAndAddEquipmentToList3({
 
 
         }
-
-
-
-
     }
     function onEquipmentSearchInputChange(e) {
 
@@ -4298,11 +5773,7 @@ function AddedEquipmentDisplayComponent({
         setRecipeEquipmentList(temp)
     }
     return (
-        <div style={{
-            backgroundColor: "#dad27a",
 
-            padding:"1em"
-        }}>
             <IonCard   style={{
                 minWidth: "10em",
                 textAlign: "center",
@@ -4313,7 +5784,7 @@ function AddedEquipmentDisplayComponent({
             }}>
                 <IonCardHeader>
                     <IonCardTitle style={{
-                        fontSize: "1rem"
+                        fontSize: ".8rem"
                     }}>
                         {data.equipmentName}
 
@@ -4331,7 +5802,7 @@ function AddedEquipmentDisplayComponent({
                             objectFit: "contain",
                             width: "15em",
                             margin: "auto",
-                            height: "8em",
+                            height: "4em",
 
                         }} src={data.imgUrl} />
 
@@ -4347,14 +5818,14 @@ function AddedEquipmentDisplayComponent({
 
                         <div><IonIcon
                             onClick={ parseInt(data.equipmentAmount) === 1  ? (() => onDeleteEquipmentFromListClick()):(() => onDecreaseEquipmentAmount())}
-                            style={{fontSize: "32px",
+                            style={{fontSize: "20px",
                                 // border: "solid",
                                 height:"100%",
                                 color: "black",
                                 cursor: "pointer",
 
                             }} icon={subtractIcon} /></div>
-                        <div  style={{fontSize: "24px",
+                        <div  style={{fontSize: "16px",
                             // border: "solid",
                             height: "100%",
                             margin: "auto .3em",
@@ -4362,7 +5833,7 @@ function AddedEquipmentDisplayComponent({
                         }}>{data.equipmentAmount}</div>
                         <div><IonIcon
                             onClick={() => onAddAmountToData()}
-                            style={{fontSize: "32px",
+                            style={{fontSize: "20px",
                                 cursor: "pointer",
                                 color: "black",
                                 // border: "solid",
@@ -4372,24 +5843,23 @@ function AddedEquipmentDisplayComponent({
                     </div>
                 </IonCardContent>
             </IonCard>
-        </div>
-
     )
 
 }
 
 function AddedIngredientDisplayComponent({
-    data, i, recipeEquipmentList, setRecipeEquipmentList
+    data, i, recipeIngredientsList, setRecipeIngredientsList,
+     setIngredientToBeEditedArrPos,setIngredientToBeEdited,
+    setIngredientsBoxStep, ingredientToBeEdited,
                                         }){
 
-    const [updatingData, setUpdatingData ] = useState(false)
-    useEffect(() => {
-        console.log(" Ingredient Display component useeffect", data)
-        setUpdatingData(false)
-    }, [updatingData])
+    // const [updatingData, setUpdatingData ] = useState(false)
+
+
+
     function onDecreaseEquipmentAmount(){
         console.log(data)
-        setUpdatingData(true)
+        // setUpdatingData(true)
 
         data.ingredientAmount = parseInt(data.ingredientAmount) - 1;
         console.log(data)
@@ -4397,30 +5867,36 @@ function AddedIngredientDisplayComponent({
     function onAddAmountToData(){
         console.log(data)
 
-        setUpdatingData(true)
+        // setUpdatingData(true)
 
 
-        data.ingredientAmount = data.ingredientAmounr + 1;
+        data.ingredientAmount = parseInt(data.ingredientAmount) + 1;
         console.log(data)
 
 
     }
+    function onEditIconClick(){
 
-    function onDeleteEquipmentFromListClick(){
-        let temp = [...recipeEquipmentList]
+
+        console.log(recipeIngredientsList, i)
+        console.log(recipeIngredientsList[i])
+        console.log(recipeIngredientsList[i].ingredientName )
+
+        setIngredientToBeEdited(recipeIngredientsList[i])
+        setIngredientToBeEditedArrPos(i)
+        // setRecipeCreationStep("Edit Ingredient Amount")
+        setIngredientsBoxStep("edit ingredient" , ingredientToBeEdited)
+
+    }
+
+    function onDeleteIngredientFromList(){
+        let temp = [...recipeIngredientsList]
 
 
         temp.splice(i,1)
-        setRecipeEquipmentList(temp)
+        setRecipeIngredientsList(temp)
     }
     return (
-        <div style={{
-            backgroundColor: "#dad27a",
-
-            padding:"1em"
-
-
-        }}>
             <IonCard   style={{
                 minWidth: "10em",
                 textAlign: "center",
@@ -4428,7 +5904,7 @@ function AddedIngredientDisplayComponent({
             }}>
                 <IonCardHeader>
                     <IonCardTitle style={{
-                        fontSize: "1.2rem"
+                        fontSize: ".8rem"
                     }}>
                         {data.ingredientName}
 
@@ -4446,21 +5922,43 @@ function AddedIngredientDisplayComponent({
                             objectFit: "contain",
                             width: "12em",
                             margin: "auto",
-                            height: "8em",
+                            height: "4em",
 
                         }} src={data.imgUrl} />
 
                     </div>
-                  <div
-                  style={{
-                      fontSize: "1.2rem"
-                  }}
-                  >{data.ingredientAmount} {data.gramsOrCups}</div>
+
+                    <div style={{display: "flex",
+                        // backgroundColor: "blue",
+                        width: "fit-content",
+                        margin: "auto",
+
+                    }}>
+                        <div
+                        style={{
+                            fontSize: ".8rem"
+                        }}
+                    >{data.ingredientAmount} {data.gramsOrCups}</div>
+
+
+                        <IonIcon
+                            onClick={() => onEditIconClick()}
+                            style={{ zIndex:"10",fontSize: "16px",
+                                // backgroundColor:"red",
+                                margin:"auto auto auto .1em",
+                                cursor: "pointer"
+
+
+
+                            }} icon={editIcon}/>
+
+
+                    </div>
+
 
 
                 </IonCardContent>
             </IonCard>
-        </div>
     )
 
 }
@@ -4471,7 +5969,8 @@ function AddedEquipmentListComponent3({
                                           setDeletingEquipment,
                                           recipeEquipmentList,setEquipmentToBeEdited,
                                           setShowEditEquipmentAmount,
-                                          index
+                                          index,
+    setEquipmentToBeEditedArrPos,
                                       }){
 
 
@@ -4502,6 +6001,7 @@ function AddedEquipmentListComponent3({
         console.log(recipeEquipmentList[index],recipeEquipmentList[index].equipmentName )
 
         setEquipmentToBeEdited(recipeEquipmentList[index])
+        setEquipmentToBeEditedArrPos(index)
         setShowEditEquipmentAmount(true)
     }
 
@@ -4510,11 +6010,11 @@ function AddedEquipmentListComponent3({
     return (
         <div  style={{display: "flex", justifyContent: "space-between"}}>
             <div style={{margin:"0 .5em"}}>
-                - {data.equipmentName} ( {data.equipmentAmount} )
+                {data.equipmentName} ( x{data.equipmentAmount} )
             </div>
-            <div style={{width: "3em"}}>
-                <img src={data.imgUrl} />
-            </div>
+            {/*<div style={{width: "3em"}}>*/}
+            {/*    <img src={data.imgUrl} />*/}
+            {/*</div>*/}
 
             <div
                 style={{
@@ -4526,6 +6026,32 @@ function AddedEquipmentListComponent3({
                 <IonIcon size="small" onClick={() => onEditIconClick()} style={{ zIndex:"10"}} icon={editIcon}/>
 
                 <IonIcon size="small" onClick={() => onDeleteIconClick()} style={{ zIndex:"10"}} icon={deleteIcon}/>
+
+            </div>
+        </div>
+
+    )
+
+
+}
+
+function EquipmentListPreviewComponent({
+                                          data,
+                                       }){
+
+    return (
+        <div  style={{display: "flex", marginTop: "1em", fontSize: ".7rem", justifyContent: "space-between"}}>
+            <div style={{margin:"0 .5em"}}>
+                {data.equipmentName} ( x{data.equipmentAmount} )
+            </div>
+
+            <div
+                style={{
+                    // backgroundColor: "red"
+                    width:"fit-content"
+
+                }}
+            >
 
             </div>
         </div>
@@ -4616,7 +6142,7 @@ function AddEquipmentAmount3({
         </IonCard>
     )
 }
-function AddNewEquipmentSearchDataDisplay3({ list, setList, setEquipmentComponentStep, setEditEquipmentDocId,
+function AddNewEquipmentSearchDataDisplay3({  setList, setEquipmentComponentStep, setEditEquipmentDocId,
                                                data, setInputState, setFilteredData,setShowAddEquipmentToList, setShowAddEquipmentAmount,
                                                setDeleting,index, recipeEquipmentList,setRecipeEquipmentList, setEquipmentToBeAdded,
                                            }){
@@ -4634,7 +6160,7 @@ function AddNewEquipmentSearchDataDisplay3({ list, setList, setEquipmentComponen
         setEquipmentToBeAdded(data)
 
 
-        console.log(data, recipeEquipmentList, list)
+        console.log(data, recipeEquipmentList)
         let temp = recipeEquipmentList;
 
 
@@ -4916,10 +6442,8 @@ function RecipeStepsList({
     },[updatingStepsList])
 
     return (
-        <div style={{textAlign: "left"}}>
-            <div style={{fontSize: "2rem", color: "black",margin: ".75em" }}>
-                Steps List
-            </div>
+        <div style={{backgroundColor: "rgba(255,241,90,0.1)"}}>
+
             {!updatingStepsList && stepsListTextArray.map((d,i) => (
                 <StepsListListComponent3
                     stepsListTextArray={stepsListTextArray}
@@ -5059,18 +6583,9 @@ function StepsListListComponent3({
             const pictureUrlConst = window.URL.createObjectURL(file);
             console.log('created URL: ', pictureUrlConst)
 
-            // await handleSave(pictureUrlConst);
-            // setPictureUrl(pictureUrlConst)
+
 
             let tempPictureArr = pictureUrlArray;
-
-            // if ( pictureUrlArray.length < 1 ){
-            //     console.log(pictureUrlArray)
-            // }else{
-            //     console.log("else", pictureUrlArray)
-            //     tempPictureArr = pictureUrlArray
-            // }
-
 
             tempPictureArr.push(pictureUrlConst);
             console.log(tempPictureArr)
@@ -5151,7 +6666,7 @@ function StepsListListComponent3({
 
         let textAreaStyle={
             resize: "none",
-            fontSize: "1.7rem",
+            fontSize: ".7rem",
             height: textAreaHeight,
             border: "none",
             backgroundColor: (stepsListTextArray.length - 1) > index ? (""):("rgba(248,209,38,0.11)") ,
@@ -5176,14 +6691,18 @@ function StepsListListComponent3({
 
 
     return (
-        <div>
-            <div style={{ display: "flex", justifyContent: "space-between", height: "fit-content"}}>
+        <IonCard>
+            <div style={{textAlign:"center", }}>
+                <div style={{marginRight: ".5em"}}>{index +1}.</div>
 
-                <div>
-                    <div style={{marginRight: ".5em"}}>{index +1}.</div>
+            </div>
+            <IonCardContent style={{ display: "flex", justifyContent: "space-between", height: "fit-content"}}>
 
-                </div>
 
+                {/*<div>*/}
+                {/*    <div style={{marginRight: ".5em"}}>{index +1}.</div>*/}
+
+                {/*</div>*/}
                     {renderTextArea()}
 
                 {stepsListTextArray.length === (index + 1 ) && (
@@ -5225,13 +6744,13 @@ function StepsListListComponent3({
                 )}
 
 
-            </div>
+            </IonCardContent>
 
-            <div style={{display: "flex"}}>
+            <div style={{display: "flex", height: "fit-content", overflowX:"scroll"}}>
                 {pictureUrlArray !== undefined  && pictureUrlArray.map((url, i) => (
-                    <div style={{width: "13em", margin: "auto", backgroundColor: "red"}}>
+                    <div style={{height:"fit-content", margin: "auto", backgroundColor: "red"}}>
                         {/*<img style={{cursor: "pointer"}} onClick={() => fileInputRef.current.click()} src={pictureUrl} alt=""/>*/}
-                        <img style={{cursor: "pointer"}}  src={url} alt=""/>
+                        <img style={{cursor: "pointer", objectFit: "contain" ,minWidth: "5em", height:"5em"}}  src={url} alt=""/>
                         <div style={{width:"fit-content", margin: " 0 auto", cursor: "pointer"}}>
                             <IonIcon onClick={() => onDeletePictureClick(i)} icon={deleteIcon}/>
                         </div>
@@ -5241,7 +6760,7 @@ function StepsListListComponent3({
                 ))}
 
             </div>
-        </div>
+        </IonCard>
 
     )
 }
@@ -5559,7 +7078,8 @@ function RecipeNutritionTotals({recipeIngredientsList, }){
             <IonCardHeader>
                 <IonItem style={{display: "flex"}}>
                     <IonLabel>Servings:</IonLabel>
-                    <IonInput type="number" onIonChange={(e) => setServings(e.target.value)} style={{border:"solid", width: "2em,"}}></IonInput>
+                    <IonInput type="number" onIonChange={(e) => setServings(e.target.value)}
+                              style={{border:"solid", width: "2em,"}}></IonInput>
                 </IonItem>
             </IonCardHeader>
             <IonCardContent>
