@@ -233,10 +233,17 @@ export const addNewIngredient = async (ingredient) => {
         const docRef = await addDoc(collection( db,'ingredients-collection'), {...ingredient}
         )
 
-        await setDoc(doc(db, 'ingredients-collection', docRef.id), {docId: docRef.id, ...ingredient})
+        const id = docRef.id;
+        console.log(id, "<- docRef.Id")
+        await setDoc(doc(db, 'ingredients-collection', docRef.id), {docId: id, ...ingredient})
+
+        const savedImgUrl = await saveNewIngredientPicture(imgUrl, id)
+        ingredient.imgURl = savedImgUrl
+        await setDoc(doc(db, 'ingredients-collection', docRef.id), {docId: id, ...ingredient})
 
 
-        return ("Ingredient added: " + ingredientName)
+
+        return ("Ingredient added: " + ingredientName, id)
     }catch (error){
         console.log("Problem with adding new ingredient", error.message)
     }
@@ -427,7 +434,7 @@ export const saveNewEquipmentPicture = async  (blobUrl,name) => {
 export const saveNewIngredientPicture = async  (blobUrl,name) => {
     console.log(name)
     // const pictureRef = ref(storage,`/menu-item-imgs/${name}`);
-    const menuItemsImgsRef = ref(storage, `ingredients-imgs-ref/${name}`);
+    const menuItemsImgsRef = ref(storage, `ingredient-imgs-ref/${name}`);
     const response = await fetch(blobUrl);
     const blob = await response.blob();
     await uploadBytes(menuItemsImgsRef, blob).then((snapshot) => {
@@ -435,7 +442,7 @@ export const saveNewIngredientPicture = async  (blobUrl,name) => {
     })
     // // const snapshot = await pictureRef.storage.ref(`/menu-item-imgs/${name}`).put(blob)
     // // const snapshot = await pictureRef.storage.ref().put(blob);
-    const url = await getDownloadURL(ref(storage,`/ingredients-imgs-ref/${name}`));
+    const url = await getDownloadURL(ref(storage,`/ingredient-imgs-ref/${name}`));
     // const url = await snapshot.ref.getDownloadURL();
     console.log('save picture ', url, );
     return url;
@@ -476,6 +483,7 @@ export const addNewEquipment = async (equipmentName, imgUrl) => {
             equipmentName,
             imgUrl
         })
+         await saveNewEquipmentPicture(imgUrl, docRef.id)
 
     }catch (e){
         console.log("Problems with adding equipment")
@@ -483,7 +491,20 @@ export const addNewEquipment = async (equipmentName, imgUrl) => {
 
     return console.log("Added nw equipment to firebase", equipmentName)
 }
+export const updateEquipmentEdit = async (equipmentName, imgUrl, docId) => {
+    try {
+        await setDoc(doc(db, "equipment-collection", docId), {
+            docId: docId,
+            equipmentName,
+            imgUrl
+        })
+        await saveNewEquipmentPicture(imgUrl, docId)
 
+    }catch (e) {
+        console.log("Problems with editing equipment")
+
+    }
+}
 export const onSaveRecipe = async (data, recipeId) => {
     console.log(data)
 
@@ -491,19 +512,61 @@ export const onSaveRecipe = async (data, recipeId) => {
     try {
         const docRef = await setDoc(doc( db,'recipes-collection', recipeId), {...data, docId: recipeId}
         )
+        await saveRecipeImg(data.imgUrl, data.recipeName, recipeId)
         return ("Recipe Saved : " + data.recipeName)
     }catch (error){
         console.log("Problem with saving recipe", error.message)
     }
 
 }
-export const onSaveRecipeCookingInstruction = async (data,recipeId) => {
+export const onSaveRecipeCookingInstruction = async (data,recipeId, stepId, recipeName,) => {
     console.log(data)
 
+    const {pictureUrlArray} = data
+    console.log(pictureUrlArray)
+
+    function executeSavingForEachPicture(pictureUrlArray){
+
+        try {
+            const promises = pictureUrlArray.map(async (url, i) => {
+                if (i === 0) {
+                    console.log(url, stepId, recipeName, recipeId, stepId)
+                    const urlAndIds = await saveRecipeStepPicture(url, stepId, recipeName, recipeId, stepId)
+                    return urlAndIds;
+
+                } else {
+                    let dateId = new Date()
+
+                    console.log(url, stepId, recipeName, recipeId, dateId.toISOString())
+
+
+                    const urlAndIds = await saveRecipeStepPicture(url, stepId, recipeName, recipeId, dateId.toISOString())
+                    return urlAndIds;
+                }
+            })
+            return Promise.all(promises)
+        }catch (e) {
+            console.log("Problem with executing save for each picture", e.message)
+
+        }
+
+    }
+
     try {
-        // const docRef = await addDoc(collection(db, `recipes-collection/${recipeId}/cooking-instructions`), {
-        //     ...data,
-        // })
+
+        if (data.videoUrl !== ""){
+            console.log("adding video", data.videoUrl)
+           const videoUrl = await addVideoToRecipeStep(data.videoUrl,recipeId,stepId, recipeName)
+            console.log("added video success")
+            data.videoUrl = videoUrl
+        }
+
+        const urlsAndIds = await executeSavingForEachPicture(pictureUrlArray)
+        console.log(urlsAndIds)
+
+        data.pictureUrlArray = urlsAndIds;
+        console.log(data)
+
         await setDoc(doc(db, `recipes-collection/${recipeId}/cooking-instructions/${data.dateId}`), {
             ...data
         })
@@ -548,7 +611,7 @@ export const saveRecipeStepPicture = async (blobUrl,stepId,recipeName, recipeId,
     console.log('save recipe step picture ', url, );
 
     const ret = {
-        url,
+        imgUrl: url,
         imgId: dateId,
         dateId: stepId,
     }
@@ -584,11 +647,11 @@ export const deleteStepVideoFromCookingStep = async (recipeId, stepDateId, recip
     try {
         deleteObject(setImgRef)
 
-        if (data.pictureUrlArray.length > 0) {
-            await setDoc(doc(db, `recipes-collection/${recipeId}/cooking-instructions/${stepDateId}`), {
-                ...data
-            })
-        }
+        // if (data.pictureUrlArray.length > 0) {
+        //     await setDoc(doc(db, `recipes-collection/${recipeId}/cooking-instructions/${stepDateId}`), {
+        //         ...data
+        //     })
+        // }
 
         return true;
     } catch (e) {
@@ -661,13 +724,27 @@ export const deleteStepPicture = async (recipeId, recipeName, dateId, imgId) => 
     const setImgRef = ref(storage, `taco-fit-recipes/${recipeId}/${recipeName}/cooking-directions/${dateId}/images/${imgId}`);
 
     try {
-        deleteObject(setImgRef)
+        await deleteObject(setImgRef)
         return console.log(recipeName,"deleted a  image from firestore storage" );
     } catch (e) {
         console.log(e.message)
     }
 
     return "success";
+}
+export const deleteTempStepVideo = async (recipeId, recipeName, dateId ) => {
+
+    console.log(recipeId, recipeName, dateId)
+    const setImgRef = ref(storage, `taco-fit-recipes/${recipeId}/${recipeName}/cooking-directions/${dateId}/videoUrl`);
+
+    try {
+        console.log(setImgRef.fullPath)
+        await deleteObject(setImgRef)
+    } catch (e) {
+        console.log(e.message, "deleteing temp step vbideo")
+    }
+
+    return console.log(recipeName,"deleted a  a video from firestore storage" );
 }
 
 // export const deleteStepArrayPicture = async (recipeId, stepIndex, recipeName, imgIndex) => {

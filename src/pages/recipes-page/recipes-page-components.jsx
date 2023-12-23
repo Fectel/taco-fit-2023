@@ -11,7 +11,7 @@ import {
     deleteEquipment,
     deleteIngredient,
     deleteStepArrayPicture, deleteStepPicture,
-    deleteStepVideo, deleteStepVideoFromCookingStep,
+    deleteStepVideo, deleteStepVideoFromCookingStep, deleteTempStepVideo,
     getRecipeId,
     loadAnyCollectionData,
     loadIngredient, loadRecipe,
@@ -20,7 +20,7 @@ import {
     saveNewEquipmentPicture,
     saveNewIngredientPicture,
     saveNewMainMenuCarouselImg, saveRecipeImg,
-    saveRecipeStepPicture,
+    saveRecipeStepPicture, updateEquipmentEdit,
     updateIngredient,
     updateStepPictureArray
 } from "../../firebase";
@@ -67,16 +67,12 @@ export function RecipeSearchDisplay({ setRecipePageStep, setCarouselStep, setMen
     async function loadAndFilterData() {
         let dataTempArray = [];
 
-
         loadedData = await loadAnyCollectionData('recipes-collection');
 
         loadedData.docs.map(doc => {
             dataTempArray = [...dataTempArray, doc.data()]
         })
         console.log(dataTempArray)
-        // setLoadedWarmUpExercisesDataFirebase([...dataTempArray])
-
-        // return filteredData;
 
         const isSearched = (element) => (
             element.recipeName?.toLowerCase().includes(inputState?.toLowerCase())
@@ -1001,6 +997,7 @@ function RecipeNameInput({setRecipeName, recipeName}){
 function RecipeEquipmentComponent({recipeEquipmentList, setRecipeEquipmentList}){
 
     const [ equipmentToBeAdded, setEquipmentToBeAdded ] = useState("")
+    const [ equipmentToBeEdited, setEquipmentToBeEdited ] = useState("")
     const [filteredData, setFilteredData] = useState([""])
     const [ recipeEquipmentComponentState, setRecipeEquipmentComponentState] = useState("display")
     const [inputState, setInputState] = useState("")
@@ -1148,6 +1145,7 @@ function RecipeEquipmentComponent({recipeEquipmentList, setRecipeEquipmentList})
                                             setFilteredData={setFilteredData}
                                             setRecipeEquipmentList={setRecipeEquipmentList}
                                             recipeEquipmentList={recipeEquipmentList}
+                                            setEquipmentToBeEdited={setEquipmentToBeEdited}
 
 
                                         />
@@ -1186,7 +1184,13 @@ function RecipeEquipmentComponent({recipeEquipmentList, setRecipeEquipmentList})
                         setRecipeEquipmentList={setRecipeEquipmentList}
                         recipeEquipmentList={recipeEquipmentList} />
                 )
-            // case "edit amount"
+            case "edit":
+                return (<EditEquipmentComponent
+                        equipmentToBeEdited={equipmentToBeEdited}
+                        setRecipeEquipmentComponentState={setRecipeEquipmentComponentState}
+
+                    />
+                )
         }
     }
 
@@ -1485,7 +1489,7 @@ function RecipeSearchLoadedDataDisplay({
 
     )
 }
-function EquipmentSearchLoadedDataDisplay({data,
+function EquipmentSearchLoadedDataDisplay({data, setEquipmentToBeEdited,
     setInputState, setRecipeEquipmentComponentState, setEquipmentToBeAdded, setFilteredData,
                                           }){
 
@@ -1510,6 +1514,14 @@ function EquipmentSearchLoadedDataDisplay({data,
 
 
     }
+    function onEditIngredientClick(){
+        setEquipmentToBeEdited(data)
+        setInputState("")
+        setFilteredData([""])
+        setRecipeEquipmentComponentState("edit")
+
+
+    }
 
     return (
         <IonCard  style={{ cursor: "pointer"}}>
@@ -1521,21 +1533,29 @@ function EquipmentSearchLoadedDataDisplay({data,
                         // backgroundColor: "blue"
 
                     }}
-                          onClick={() => onSearchDataDisplayClick(data)}
+
 
                     >
 
-                        <div
-                            style={{
-                            width: "100%",
-                            // backgroundColor: "red"
-                        }}>
-                            {data.equipmentName}
+                        <div style={{
+                            display: "flex",
 
+                            // backgroundColor: "blue"
+
+                        }} onClick={() => onSearchDataDisplayClick(data)}>
+                            <div
+                                style={{
+                                    width: "100%",
+                                    backgroundColor: "red"
+                                }}>
+                                {data.equipmentName}
+
+                            </div>
+                            <div style={{width: "5em"}}>
+                                <img src={data.imgUrl} />
+                            </div>
                         </div>
-                        <div style={{width: "5em"}}>
-                            <img src={data.imgUrl} />
-                        </div>
+
                         <div
                             style={{display: "flex"}}
 
@@ -1552,7 +1572,7 @@ function EquipmentSearchLoadedDataDisplay({data,
 
                             </div>
                             <div
-                                // onClick={() => onEditIngredientClick()}
+                                onClick={() => onEditIngredientClick()}
                             >
                                 <IonIcon  size="small"  style={{margin: "0 .5em", zIndex:"10"}}  icon={editIcon}/>
 
@@ -1610,13 +1630,13 @@ function IngredientsSearchLoadedDataDisplay({data,
             {data.imgUrl && (
                 <IonCardContent>
                     <div style={{
-                        backgroundColor:"green",
+                        // backgroundColor:"green",
                         display: "flex"
                     }}>
                         <div  style={{
                             display: "flex",
                             justifyContent: "space-between",
-                            backgroundColor: "blue",
+                            // backgroundColor: "blue",
                             width: "100%"
 
                         }}
@@ -1627,7 +1647,7 @@ function IngredientsSearchLoadedDataDisplay({data,
                             <div
                                 style={{
                                     width: "100%",
-                                    backgroundColor: "red"
+                                    // backgroundColor: "red"
                                 }}>
                                 {data.ingredientName}
 
@@ -1704,10 +1724,10 @@ function AddNewEquipmentComponent({
             const pictureUrlConst = window.URL.createObjectURL(file);
             console.log('created URL: ', pictureUrlConst)
 
-            const imgUrl = await saveNewEquipmentPicture(pictureUrlConst, newEquipmentName)
+            // const imgUrl = await saveNewEquipmentPicture(pictureUrlConst, newEquipmentName)
 
-            console.log(imgUrl)
-            setEquipmentUploadedUrl(imgUrl)
+            console.log(pictureUrlConst)
+            setEquipmentUploadedUrl(pictureUrlConst)
 
 
         }
@@ -1715,6 +1735,7 @@ function AddNewEquipmentComponent({
     };
 
     function onCancelAddNewEquipment(){
+        setEquipmentUploadedUrl("")
         setRecipeEquipmentComponentState("search")
     }
 
@@ -1733,6 +1754,180 @@ function AddNewEquipmentComponent({
     async function onSaveEquipment() {
         await addNewEquipment(newEquipmentName, equipmentUploadedUrl);
         console.log("saving equipment")
+        setRecipeEquipmentComponentState("search")
+
+    }
+
+    function renderAddNewEquipmentComponent(){
+
+        return (
+            <IonCard>
+                <IonCardHeader style={{textAlign: "center"}}>
+                    <div
+                        style={{
+                            position: "absolute",
+                            right: ".5em",
+                            zIndex: "10",
+                            cursor: "pointer"
+                        }}
+                        onClick={() => setRecipeEquipmentComponentState("search")}
+                    >X</div>
+                    <IonCardTitle>
+                        Add New Equipment
+                    </IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                    <IonItem fill="solid">
+                        <IonLabel position="floating">Equipment Name</IonLabel>
+
+                        <IonInput
+                            value={newEquipmentName}
+                            // style={{
+                            //     border: "none",
+                            //     width: "100%"
+                            // }}
+                            // onClick={() => searchClicked()}
+                            type="text"
+                            onIonChange={(e) => setNewEquipmentName(e.target.value)}
+                        />
+                    </IonItem>
+                    {newEquipmentName &&
+                        newEquipmentName !== " " &&
+                        newEquipmentName !== "  " &&
+                        newEquipmentName !== "   " &&
+                        newEquipmentName !== "    " &&
+                        newEquipmentName !== "     " &&
+                        newEquipmentName !== "      " &&
+                        newEquipmentName !== "       " &&
+                        newEquipmentName !== "         " &&
+                        newEquipmentName.length > 2 &&
+                        (
+                            <div style={{
+                                border:"solid",
+                                display: "flex",
+                                flexDirection: "column"
+                            }}>
+                                <div style={
+                                    {width: "15em",
+                                        display: "flex",
+                                        height: "12em",
+                                        border: "solid",
+                                        margin: " 2em auto 0"}}>
+                                    {equipmentUploadedUrl === "" ?  (
+                                        <div style={{
+                                            width: "fit-content",
+                                            margin: "auto",
+                                            backgroundColor: "red"}}>Add Photo</div>
+
+                                    ): (
+                                        <img src={equipmentUploadedUrl}  alt="uploaded image of equipment"/>
+                                    )}
+
+
+                                </div>
+                                <div style={{
+                                    border:"solid",
+                                    width: "fit-content",
+                                    margin: "auto",
+                                }}>
+                                    <input type="file" accept="image/*" hidden
+                                           ref={imageInputRef}
+                                           onChange={handleFileChangeImage}
+                                    />
+                                    <IonButton
+                                        style={{
+                                            width: "fit-content",
+                                            margin: "auto"}}
+                                        onClick={() => imageInputRef.current.click()}
+                                    >
+                                        <IonIcon icon={uploadPhotoIcon}/>
+                                    </IonButton>
+                                </div>
+                                <div
+
+                                    style={{display: "flex",
+                                        backgroundColor: "medium",
+                                        margin: "1em 0",
+                                        justifyContent: "space-evenly",
+                                    }}
+                                >
+                                    <IonButton onClick={() => onCancelAddNewEquipment()} color="danger">Cancel</IonButton>
+                                    <IonButton onClick={() => onSaveEquipment()}>Save</IonButton>
+                                </div>
+
+                            </div>
+                        )}
+
+
+
+
+
+                    {/*</IonCard>*/}
+
+
+                </IonCardContent>
+            </IonCard>
+        )
+
+    }
+
+    return(
+        <div>
+            {renderAddNewEquipmentComponent()}
+        </div>
+    )
+}
+function EditEquipmentComponent({equipmentToBeEdited, setRecipeEquipmentComponentState}){
+
+    console.log(equipmentToBeEdited)
+
+    const [newEquipmentName, setNewEquipmentName] = useState(equipmentToBeEdited.equipmentName)
+    const imageInputRef = useRef();
+
+    const [equipmentUploadedUrl, setEquipmentUploadedUrl ] = useState(equipmentToBeEdited.imgUrl)
+    const letters = /^[A-Za-z]+$/
+
+    useEffect(() => {
+        console.log(equipmentUploadedUrl)
+    }, [equipmentUploadedUrl])
+
+    const handleFileChangeImage = async (event) => {
+
+        if (event.target.files.length > 0) {
+            const file = event.target.files.item(0);
+            const pictureUrlConst = window.URL.createObjectURL(file);
+            console.log('created URL: ', pictureUrlConst)
+
+            // const imgUrl = await saveNewEquipmentPicture(pictureUrlConst, newEquipmentName)
+
+            console.log(pictureUrlConst)
+            setEquipmentUploadedUrl(pictureUrlConst)
+
+
+        }
+
+    };
+
+    function onCancelAddNewEquipment(){
+        // setEquipmentUploadedUrl("")
+        setRecipeEquipmentComponentState("search")
+    }
+
+    // function onInputChange(e){
+    //
+    //     if (e.target.value === " "){
+    //         e.preventDefault()
+    //         console.log(e.target.value)
+    //
+    //     }else{
+    //         setNewEquipmentName(e.target.value)
+    //         console.log(e.target.value, "!!!!")
+    //
+    //     }
+    // }
+    async function onSaveEquipment() {
+        await updateEquipmentEdit(newEquipmentName, equipmentUploadedUrl, equipmentToBeEdited.docId);
+        console.log("saving equipment edit ")
         setRecipeEquipmentComponentState("search")
 
     }
@@ -3131,13 +3326,14 @@ function StepsListListComponent({
 
 
     let initialUrlArr = []
+    console.log(recipeStepsListTextArray)
     recipeStepsListTextArray[index].pictureUrlArray?.map((url, i) => {
         initialUrlArr = [...initialUrlArr, url];
 
     })
 
 
-    const [pictureUrlArray, setPictureUrlArray ] = useState(initialUrlArr)
+    const [pictureUrlArray, setPictureUrlArray ] = useState([...initialUrlArr])
     console.log(initialUrlArr, index, pictureUrlArray, tempPictureUrlArray)
 
     const [addingVideo, setAddingVideo ] = useState(false)
@@ -3161,6 +3357,12 @@ function StepsListListComponent({
 
     console.log(stepInputData)
 
+    function deleteTempPic( i){
+        let tempPicArray = tempPictureUrlArray;
+        tempPicArray.splice(i, 1)
+        setTempPictureUrlArray(tempPicArray)
+        setUpdatingPictureArray(true)
+    }
     async function deleteTempPictureFromFbStorage(data,i) {
         //aslo delete tempPictureUrlArray
         console.log(data)
@@ -3169,6 +3371,22 @@ function StepsListListComponent({
         tempArray.splice(i, 1)
         setTempPictureUrlArray(tempArray)
         setUpdatingPictureArray(true)
+
+    }
+    async function deleteImgFromFbWithoutIndex(data){
+        await deleteStepPicture(data.recipeId, data.recipeName, data.dateId, data.imgId)
+
+    }
+    async function deleteAllTempImgs() {
+        const res = await tempPictureUrlArray.map((data, i) => {
+            console.log(data)
+            deleteImgFromFbWithoutIndex(data)
+        })
+        console.log(res)
+
+        if (res === true ) {
+            setTempPictureUrlArray([])
+        }
 
     }
 
@@ -3193,6 +3411,11 @@ function StepsListListComponent({
             setUpdatingPictureArray(false)
         }
 
+        //
+        // if (tempPictureUrlArray.length > 0){
+        //     console.log(tempPictureUrlArray)
+        //     window.addEventListener("beforeunload", deleteAllTempImgs);
+        // }
 
 
 
@@ -3213,22 +3436,24 @@ function StepsListListComponent({
 
         let tempObj = {
             stepInputData,
-            pictureUrlArray: tempPictureUrlArray, videoUrl,
+            pictureUrlArray: tempPictureUrlArray,
+            videoUrl,
             dateId: stepDateId,
-            // dateId: tempPictureUrlArray[0]?.dateId === undefined ? (date.toISOString()): (tempPictureUrlArray[0]?.dateId)
         }
 
-        let res = await onSaveRecipeCookingInstruction(tempObj, recipeId)
+        let res = await onSaveRecipeCookingInstruction(tempObj, recipeId,stepDateId, recipeName,stepDateId)
         console.log( res ,tempObj)
         temp[index] = tempObj;
         console.log(temp)
 
-        setPictureUrlArray([...tempPictureUrlArray])
+        // const newPicArr =
+
+
+        setPictureUrlArray([...tempObj.pictureUrlArray])
         setTempPictureUrlArray([])
-        console.log(tempPictureUrlArray, pictureUrlArray)
+        console.log(tempPictureUrlArray, pictureUrlArray, tempObj.pictureUrlArray)
         setRecipeStepsListTextArray([...temp, ""])
 
-        // setUpdatingStepsList(true)
     }
 
     function onDeleteDataClick(){
@@ -3256,7 +3481,7 @@ function StepsListListComponent({
 
         //add vidoe url and work on deleting it
         deleteCookingStep(recipeId, recipeName, stepDateId, pictureUrlArray, newTempArray)
-        // onDeleteVideoClick()
+        onDeleteVideoClick()
         // pictureUrlArray.map((pic, i) => {
         //     onDeletePictureClick(i)
         // })
@@ -3295,23 +3520,20 @@ function StepsListListComponent({
             console.log('created URL: ', pictureUrlConst)
 
 
-
-            // let tempPictureArr = pictureUrlArray;
             let tempPictureArr = tempPictureUrlArray;
 
             tempPictureArr.push(pictureUrlConst);
             console.log(tempPictureArr)
 
-            let imgUrlAndId = await saveImage2(pictureUrlConst, tempPictureArr.length-1)
+            // let imgUrlAndId = await saveImage2(pictureUrlConst, tempPictureArr.length-1)
 
-            imgUrlAndId = {...imgUrlAndId,recipeId, recipeName}
-            tempPictureArr.splice(tempPictureArr.length-1, 1, imgUrlAndId);
+            // imgUrlAndId = {...imgUrlAndId,recipeId, recipeName}
+            // tempPictureArr.splice(tempPictureArr.length-1, 1, imgUrlAndId);
             console.log(tempPictureArr)
 
 
 
             setTempPictureUrlArray(tempPictureArr)
-            // setPictureUrlArray(tempPictureArr)
             setUpdatingPictureArray(true)
 
         }
@@ -3358,23 +3580,13 @@ function StepsListListComponent({
 
     async function onDeleteVideoClick() {
 
-        console.log(recipeStepsListTextArray)
-        let tempObj = {
-            stepInputData,
-            pictureUrlArray, videoUrl: "",
-            dateId: stepDateId
-        }
-        console.log(tempObj)
-        let res = await deleteStepVideoFromCookingStep(recipeId, stepDateId, recipeName, tempObj)
-        console.log(res)
 
-        // let tempRecipeStepList = [...recipeStepsListTextArray]
-        // let tempStep = recipeStepsListTextArray[index]
-        // tempStep.videoUrl = ""
-        // tempRecipeStepList.splice(index, 1, tempStep)
-        // console.log(tempRecipeStepList)
-        // setRecipeStepsListTextArray([...tempRecipeStepList])
-        // let res2 = await updateFirebaseRecipeStepsListTextArray(recipeId, tempRecipeStepList)
+        console.log(recipeId, recipeName, stepDateId)
+
+        // await deleteTempStepVideo(recipeId, recipeName, stepDateId )
+
+        window.URL.revokeObjectURL(videoUrl);
+
 
         setVideoUrl("")
         setAddingVideo(false)
@@ -3382,7 +3594,7 @@ function StepsListListComponent({
 
     async function onDeletePictureClick(i) {
 
-        console.log(recipeStepsListTextArray)
+        // console.log(recipeStepsListTextArray)
 
 
         console.log(pictureUrlArray[i])
@@ -3394,27 +3606,17 @@ function StepsListListComponent({
 
         // let res = await deleteStepArrayPicture(recipeId, pictureUrlArray[i].dateId, recipeName, pictureUrlArray[i].imgId)
 
-
-        // if (tempArray.length === 0){
-        //     console.log("tempArray.length > 0")
-
-            let tempObj = {
-                stepInputData,
-                pictureUrlArray, videoUrl,
-                dateId: stepDateId
-            }
-            console.log(tempObj)
-            let res = await updateStepPictureArray(recipeId, tempObj, recipeName, deleteId)
-            console.log(res)
+            // let tempObj = {
+            //     stepInputData,
+            //     pictureUrlArray, videoUrl,
+            //     dateId: stepDateId
+            // }
+            // console.log(tempObj)
+            // let res = await updateStepPictureArray(recipeId, tempObj, recipeName, deleteId)
+            // console.log(res)
 
             setPictureUrlArray(tempArray)
             setUpdatingPictureArray(true)
-
-        // }else {
-        //     console.log("tempArray.length === 0")
-        // }
-
-
     }
 
 
@@ -3473,246 +3675,255 @@ function StepsListListComponent({
     }
 
 
+    function renderStepsListListComponent(){
+
+        console.log(pictureUrlArray)
+        return (
+            <IonCard>
+                <div style={{textAlign:"center", }}>
+                    <div style={{marginRight: ".5em"}}>{index +1}.</div>
+
+                </div>
+                <IonCardContent style={{ display: "flex", justifyContent: "space-between", height: "fit-content"}}>
+
+
+                    {/*<div>*/}
+                    {/*    <div style={{marginRight: ".5em"}}>{index +1}.</div>*/}
+
+                    {/*</div>*/}
+                    <div style={{width: "100%"}}>
+                        <div style={{border: "solid", width: "100%"}}>
+                            {renderTextArea()}
+
+                            {recipeStepsListTextArray.length === (index + 1 ) && (
+                                <>
+                                    <input type="file" accept="image/*" hidden ref={imageInputRef}
+                                           onChange={handleFileChangeImage}
+                                    />
+
+
+                                    {/*{pictureUrl && (*/}
+                                    {/*    <div style={{width: "100%", margin: "auto", backgroundColor: "green"}}>*/}
+                                    {/*        /!*<img style={{cursor: "pointer"}} onClick={() => fileInputRef.current.click()} src={pictureUrl} alt=""/>*!/*/}
+                                    {/*        <img style={{cursor: "pointer"}}  src={pictureUrl} alt=""/>*/}
+
+
+                                    {/*    </div>*/}
+                                    {/*)}*/}
+
+                                    <IonButton
+                                        disabled={stepInputData?.length < 10 || stepInputData === undefined}
+                                        onClick={() => imageInputRef.current.click()}>
+                                        <IonIcon icon={uploadPhotoIcon}/>
+                                    </IonButton>
+                                    <IonButton
+                                        disabled={addingVideo || stepInputData?.length < 10 || stepInputData === undefined}
+                                        onClick={() => setAddingVideo(true)}
+                                    >
+                                        <IonIcon icon={videocamOutline}/>
+                                    </IonButton>
+
+
+                                </>
+
+
+                            )}
+                        </div>
+
+
+                        <div>
+                            {videoUrl === "" && addingVideo && (
+                                <ReactWebcamTutorial
+                                    setVideoUrl={setVideoUrl}
+                                    videoUrl={videoUrl}
+                                    optionsUseSate={optionsUseSate}
+                                    setOptionsUseState={setOptionsUseState}
+                                    stepDateId={stepDateId}
+                                />
+                            )}
+                        </div>
+                    </div>
+
+
+                    {recipeStepsListTextArray.length > (index + 1) &&(
+                        <div style={{display: "flex"}}>
+
+                            <IonButton color="danger" onClick={() => onDeleteDataClick()}>
+                                <IonIcon icon={deleteIcon} />
+                            </IonButton>
+
+                        </div>
+
+                    )}
+
+                </IonCardContent>
+
+                <div style={{display: "flex", height: "fit-content", overflowX:"scroll"}}>
+                    {pictureUrlArray !== undefined  && pictureUrlArray.map((img, i) => (
+                        <div style={{height:"fit-content", margin: "auto",
+                            // backgroundColor: "red"
+                        }}>
+
+                            {/*<img style={{cursor: "pointer"}} onClick={() => fileInputRef.current.click()} src={pictureUrl} alt=""/>*/}
+                            <img style={{cursor: "pointer", objectFit: "contain" ,width: "100px", height:"auto"}}  src={img.imgUrl} alt=""/>
+
+
+                            {(recipeStepsListTextArray.length-1) === index  && (
+                                <div style={{
+                                    borderRadius:"5px",
+                                    cursor:"pointer",
+                                    width: "fit-content",
+                                    margin:"auto",
+                                    padding:".4em .6em",
+                                    backgroundColor: "#EB445A",
+                                    display:"flex",
+                                    height:"fit-content",
+                                }} >
+                                    <IonIcon style={{
+                                        fontSize:"20px",
+                                        color:"white",
+                                        // backgroundColor:"red",
+                                        margin:"auto",
+                                    }}
+                                             onClick={() => onDeletePictureClick(i)}
+                                             icon={deleteIcon}></IonIcon>
+                                </div>
+                            ) }
+                        </div>
+                    ))}
+                    {videoUrl !== "" && (
+                        <div style={{ display:"flex", flexDirection: "column",height: "auto", width:"100px", margin:"auto",  marginBottom: ".5em"}}>
+
+
+                            <video style={{
+                                transform: "rotateY(180deg)",
+                                // margin: "auto",
+                                width:"100%"
+                            }}  muted  autoPlay loop playsInline={true}
+
+                            >
+                                <source src={videoUrl}  type='video/webm; codecs=vp9'/>
+                                <source src={videoUrl}  type="video/mp4"/>
+                                <source src={videoUrl}  type="video/webm"/>
+
+                            </video>
+
+                            {(recipeStepsListTextArray.length-1) === index  && (
+                                <div style={{
+                                    borderRadius:"5px",
+                                    cursor:"pointer",
+                                    width: "fit-content",
+                                    margin:"auto",
+                                    padding:".4em .6em",
+                                    backgroundColor: "#EB445A",
+                                    display:"flex",
+                                    height:"fit-content",
+                                }} >
+                                    <IonIcon style={{
+                                        fontSize:"20px",
+                                        color:"white",
+                                        // backgroundColor:"red",
+                                        margin:"auto",
+                                    }}
+                                             onClick={() => onDeleteVideoClick()}
+                                             icon={deleteIcon}></IonIcon>
+                                </div>
+
+                            )}
+
+                        </div>
+                    )}
+                </div>
+                <div style={{display: "flex", height: "fit-content", overflowX:"scroll"}}>
+                    {tempPictureUrlArray !== undefined  && tempPictureUrlArray.map((img, i) => (
+                        <div style={{height:"fit-content", margin: "auto",
+                            // backgroundColor: "red"
+                        }}>TEMPPPP
+                            {/*<img style={{cursor: "pointer"}} onClick={() => fileInputRef.current.click()} src={pictureUrl} alt=""/>*/}
+                            <img style={{cursor: "pointer", objectFit: "contain" ,width: "100px", height:"auto"}}  src={img} alt=""/>
+
+
+                            {(recipeStepsListTextArray.length-1) === index  && (
+                                <div style={{
+                                    borderRadius:"5px",
+                                    cursor:"pointer",
+                                    width: "fit-content",
+                                    margin:"auto",
+                                    padding:".4em .6em",
+                                    backgroundColor: "#EB445A",
+                                    display:"flex",
+                                    height:"fit-content",
+                                }} >
+                                    <IonIcon style={{
+                                        fontSize:"20px",
+                                        color:"white",
+                                        // backgroundColor:"red",
+                                        margin:"auto",
+                                    }}
+                                        onClick={() => deleteTempPic( i)}
+                                             icon={deleteIcon}></IonIcon>
+                                </div>
+                            ) }
+                        </div>
+                    ))}
+                    {/*{videoUrl !== "" && (*/}
+                    {/*    <div style={{ display:"flex", flexDirection: "column",height: "auto", width:"100px", margin:"auto",  marginBottom: ".5em"}}>*/}
+
+
+                    {/*        <video style={{*/}
+                    {/*            transform: "rotateY(180deg)",*/}
+                    {/*            // margin: "auto",*/}
+                    {/*            width:"100%"*/}
+                    {/*        }}  muted  autoPlay loop playsInline={true}*/}
+
+                    {/*        >*/}
+                    {/*            <source src={videoUrl}  type='video/webm; codecs=vp9'/>*/}
+                    {/*            <source src={videoUrl}  type="video/mp4"/>*/}
+                    {/*            <source src={videoUrl}  type="video/webm"/>*/}
+
+                    {/*        </video>*/}
+
+                    {/*        {(recipeStepsListTextArray.length-1) === index  && (*/}
+                    {/*        <div style={{*/}
+                    {/*            borderRadius:"5px",*/}
+                    {/*            cursor:"pointer",*/}
+                    {/*            width: "fit-content",*/}
+                    {/*            margin:"auto",*/}
+                    {/*            padding:".4em .6em",*/}
+                    {/*            backgroundColor: "#EB445A",*/}
+                    {/*            display:"flex",*/}
+                    {/*            height:"fit-content",*/}
+                    {/*        }} >*/}
+                    {/*            <IonIcon style={{*/}
+                    {/*                fontSize:"20px",*/}
+                    {/*                color:"white",*/}
+                    {/*                // backgroundColor:"red",*/}
+                    {/*                margin:"auto",*/}
+                    {/*            }}*/}
+                    {/*                     onClick={() => onDeleteVideoClick()}*/}
+                    {/*                     icon={deleteIcon}></IonIcon>*/}
+                    {/*        </div>*/}
+
+                    {/*        )}*/}
+
+                    {/*    </div>*/}
+                    {/*)}*/}
+                </div>
+                {recipeStepsListTextArray.length === (index + 1) &&(
+
+                    <IonButton expand="block" color="warning" disabled={stepInputData?.toString().length < 10 || stepInputData === undefined} onClick={() => onAddDataClick()}>
+                        Save Step<IonIcon style={{margin:".5em"}} icon={saveOutline}/>
+                        {console.log(stepInputData)}
+                    </IonButton>
+                )}
+            </IonCard>
+
+        )
+    }
 
 
     return (
-        <IonCard>
-            <div style={{textAlign:"center", }}>
-                <div style={{marginRight: ".5em"}}>{index +1}.</div>
-
-            </div>
-            <IonCardContent style={{ display: "flex", justifyContent: "space-between", height: "fit-content"}}>
-
-
-                {/*<div>*/}
-                {/*    <div style={{marginRight: ".5em"}}>{index +1}.</div>*/}
-
-                {/*</div>*/}
-                <div style={{width: "100%"}}>
-                    <div style={{border: "solid", width: "100%"}}>
-                        {renderTextArea()}
-
-                        {recipeStepsListTextArray.length === (index + 1 ) && (
-                            <>
-                                <input type="file" accept="image/*" hidden ref={imageInputRef}
-                                       onChange={handleFileChangeImage}
-                                />
-
-
-                                {/*{pictureUrl && (*/}
-                                {/*    <div style={{width: "100%", margin: "auto", backgroundColor: "green"}}>*/}
-                                {/*        /!*<img style={{cursor: "pointer"}} onClick={() => fileInputRef.current.click()} src={pictureUrl} alt=""/>*!/*/}
-                                {/*        <img style={{cursor: "pointer"}}  src={pictureUrl} alt=""/>*/}
-
-
-                                {/*    </div>*/}
-                                {/*)}*/}
-
-                                <IonButton
-                                    disabled={stepInputData?.length < 10 || stepInputData === undefined}
-                                    onClick={() => imageInputRef.current.click()}>
-                                    <IonIcon icon={uploadPhotoIcon}/>
-                                </IonButton>
-                                <IonButton
-                                    disabled={addingVideo || stepInputData?.length < 10 || stepInputData === undefined}
-                                    onClick={() => setAddingVideo(true)}
-                                >
-                                    <IonIcon icon={videocamOutline}/>
-                                </IonButton>
-
-
-                            </>
-
-
-                        )}
-                    </div>
-
-
-                    <div>
-                        {videoUrl === "" && addingVideo && (
-                            <ReactWebcamTutorial
-                                setVideoUrl={setVideoUrl}
-                                videoUrl={videoUrl}
-                                optionsUseSate={optionsUseSate}
-                                setOptionsUseState={setOptionsUseState}
-                                stepDateId={stepDateId}
-                            />
-                        )}
-                    </div>
-                </div>
-
-
-                {recipeStepsListTextArray.length > (index + 1) &&(
-                    <div style={{display: "flex"}}>
-
-                        <IonButton color="danger" onClick={() => onDeleteDataClick()}>
-                            <IonIcon icon={deleteIcon} />
-                        </IonButton>
-
-                    </div>
-
-                )}
-
-            </IonCardContent>
-
-            <div style={{display: "flex", height: "fit-content", overflowX:"scroll"}}>
-                {pictureUrlArray !== undefined  && pictureUrlArray.map((img, i) => (
-                    <div style={{height:"fit-content", margin: "auto",
-                        // backgroundColor: "red"
-                    }}>
-                        {/*<img style={{cursor: "pointer"}} onClick={() => fileInputRef.current.click()} src={pictureUrl} alt=""/>*/}
-                        <img style={{cursor: "pointer", objectFit: "contain" ,width: "100px", height:"auto"}}  src={img.imgUrl} alt=""/>
-
-
-                        {(recipeStepsListTextArray.length-1) === index  && (
-                            <div style={{
-                                borderRadius:"5px",
-                                cursor:"pointer",
-                                width: "fit-content",
-                                margin:"auto",
-                                padding:".4em .6em",
-                                backgroundColor: "#EB445A",
-                                display:"flex",
-                                height:"fit-content",
-                            }} >
-                                <IonIcon style={{
-                                    fontSize:"20px",
-                                    color:"white",
-                                    // backgroundColor:"red",
-                                    margin:"auto",
-                                }}
-                                         onClick={() => onDeletePictureClick(i)}
-                                         icon={deleteIcon}></IonIcon>
-                            </div>
-                        ) }
-                    </div>
-                ))}
-                {videoUrl !== "" && (
-                    <div style={{ display:"flex", flexDirection: "column",height: "auto", width:"100px", margin:"auto",  marginBottom: ".5em"}}>
-
-
-                        <video style={{
-                            transform: "rotateY(180deg)",
-                            // margin: "auto",
-                            width:"100%"
-                        }}  muted  autoPlay loop playsInline={true}
-
-                        >
-                            <source src={videoUrl}  type='video/webm; codecs=vp9'/>
-                            <source src={videoUrl}  type="video/mp4"/>
-                            <source src={videoUrl}  type="video/webm"/>
-
-                        </video>
-
-                        {(recipeStepsListTextArray.length-1) === index  && (
-                        <div style={{
-                            borderRadius:"5px",
-                            cursor:"pointer",
-                            width: "fit-content",
-                            margin:"auto",
-                            padding:".4em .6em",
-                            backgroundColor: "#EB445A",
-                            display:"flex",
-                            height:"fit-content",
-                        }} >
-                            <IonIcon style={{
-                                fontSize:"20px",
-                                color:"white",
-                                // backgroundColor:"red",
-                                margin:"auto",
-                            }}
-                                     onClick={() => onDeleteVideoClick()}
-                                     icon={deleteIcon}></IonIcon>
-                        </div>
-
-                        )}
-
-                    </div>
-                )}
-            </div>
-            <div style={{display: "flex", height: "fit-content", overflowX:"scroll"}}>
-                {tempPictureUrlArray !== undefined  && tempPictureUrlArray.map((img, i) => (
-                    <div style={{height:"fit-content", margin: "auto",
-                        // backgroundColor: "red"
-                    }}>TEMPPPP
-                        {/*<img style={{cursor: "pointer"}} onClick={() => fileInputRef.current.click()} src={pictureUrl} alt=""/>*/}
-                        <img style={{cursor: "pointer", objectFit: "contain" ,width: "100px", height:"auto"}}  src={img.imgUrl} alt=""/>
-
-
-                        {(recipeStepsListTextArray.length-1) === index  && (
-                            <div style={{
-                                borderRadius:"5px",
-                                cursor:"pointer",
-                                width: "fit-content",
-                                margin:"auto",
-                                padding:".4em .6em",
-                                backgroundColor: "#EB445A",
-                                display:"flex",
-                                height:"fit-content",
-                            }} >
-                                <IonIcon style={{
-                                    fontSize:"20px",
-                                    color:"white",
-                                    // backgroundColor:"red",
-                                    margin:"auto",
-                                }}
-                                         onClick={() => deleteTempPictureFromFbStorage(img, i)}
-                                         icon={deleteIcon}></IonIcon>
-                            </div>
-                        ) }
-                    </div>
-                ))}
-                {videoUrl !== "" && (
-                    <div style={{ display:"flex", flexDirection: "column",height: "auto", width:"100px", margin:"auto",  marginBottom: ".5em"}}>
-
-
-                        <video style={{
-                            transform: "rotateY(180deg)",
-                            // margin: "auto",
-                            width:"100%"
-                        }}  muted  autoPlay loop playsInline={true}
-
-                        >
-                            <source src={videoUrl}  type='video/webm; codecs=vp9'/>
-                            <source src={videoUrl}  type="video/mp4"/>
-                            <source src={videoUrl}  type="video/webm"/>
-
-                        </video>
-
-                        {(recipeStepsListTextArray.length-1) === index  && (
-                        <div style={{
-                            borderRadius:"5px",
-                            cursor:"pointer",
-                            width: "fit-content",
-                            margin:"auto",
-                            padding:".4em .6em",
-                            backgroundColor: "#EB445A",
-                            display:"flex",
-                            height:"fit-content",
-                        }} >
-                            <IonIcon style={{
-                                fontSize:"20px",
-                                color:"white",
-                                // backgroundColor:"red",
-                                margin:"auto",
-                            }}
-                                     onClick={() => onDeleteVideoClick()}
-                                     icon={deleteIcon}></IonIcon>
-                        </div>
-
-                        )}
-
-                    </div>
-                )}
-            </div>
-            {recipeStepsListTextArray.length === (index + 1) &&(
-
-            <IonButton expand="block" color="warning" disabled={stepInputData?.toString().length < 10 || stepInputData === undefined} onClick={() => onAddDataClick()}>
-                Save Step<IonIcon style={{margin:".5em"}} icon={saveOutline}/>
-                {console.log(stepInputData)}
-            </IonButton>
-            )}
-        </IonCard>
+        <div>{renderStepsListListComponent()}</div>
 
     )
 }
@@ -4877,10 +5088,10 @@ export function AddIngredientNutritionalFacts({
             const pictureUrlConst = window.URL.createObjectURL(file);
             console.log('created URL: ', pictureUrlConst)
 
-            const imgUrl = await saveNewIngredientPicture(pictureUrlConst, ingredientName)
+            // const imgUrl = await saveNewIngredientPicture(pictureUrlConst, ingredientName)
 
-            console.log(imgUrl)
-            setIngredientUploadedImgUrl(imgUrl)
+            console.log(pictureUrlConst)
+            setIngredientUploadedImgUrl(pictureUrlConst)
 
         }
 
@@ -6060,10 +6271,10 @@ function AddRecipePicture({
             const pictureUrlConst = window.URL.createObjectURL(file);
             console.log('created URL: ', pictureUrlConst)
 
-            const imgUrl = await saveRecipeImg(pictureUrlConst, recipeName, recipeId)
+            // const imgUrl = await saveRecipeImg(pictureUrlConst, recipeName, recipeId)
 
-            console.log(imgUrl)
-            setRecipeImgUrl(imgUrl)
+            console.log(pictureUrlConst)
+            setRecipeImgUrl(pictureUrlConst)
 
 
         }

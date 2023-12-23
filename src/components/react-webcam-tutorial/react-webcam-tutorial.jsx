@@ -10,7 +10,7 @@ import {
 import {ReactMediaRecorder, useReactMediaRecorder} from "react-media-recorder";
 import Webcam from "react-webcam";
 import useLocalStorage from "../../useLocalStorage";
-import {addVideoToRecipeStep} from "../../firebase";
+import {addVideoToRecipeStep, deleteTempStepVideo} from "../../firebase";
 
 export default function ReactWebcamTutorial({videoUrl, setVideoUrl, optionsUseSate, setOptionsUseState, stepDateId}){
 
@@ -90,23 +90,25 @@ export default function ReactWebcamTutorial({videoUrl, setVideoUrl, optionsUseSa
             const blob = new Blob(recordedChunks, {
                 type: "video/webm",
             });
-            const url = URL.createObjectURL(blob);
-            console.log(url)
-            setBlobUrl(url)
-
-            // await getVideoStorageUrl(videoUrl)
-            const res = await addVideoToRecipeStep(url, recipeId, stepDateId, recipeName)
-            console.log(res)
-            setVideoUrl(res)
+            const url = window.URL.createObjectURL(blob);
+            // console.log(url)
+            // setBlobUrl(url)
+            //
+            // const res = await addVideoToRecipeStep(url, recipeId, stepDateId, recipeName)
+            // console.log(res)
+            setVideoUrl(url)
 
 
 
         }
     }
 
-    function onDeleteVideoClick(){
+    async function onDeleteVideoClick() {
+        await deleteTempStepVideo(recipeId, recipeName, stepDateId )
+
+
         setBlobUrl("")
-                window.URL.revokeObjectURL(blobUrl);
+        window.URL.revokeObjectURL(blobUrl);
         setWebcamComponentState("")
         setRecordedChunks([])
         setVideoUrl("")
@@ -156,6 +158,7 @@ const videoConstraints = {
                                 width: "fit-content",
                                 margin: "auto"
                             }}>
+
                                 <Webcam
 
                                     width={200}
@@ -258,6 +261,7 @@ const videoConstraints = {
 
                                 </video>
 
+
                             </div>
                             {/*<div style={{ display:"flex", height: "100px", width:"100px", margin:"auto", marginBottom: ".5em"}}>*/}
 
@@ -283,6 +287,7 @@ const videoConstraints = {
                                 display:"flex",
                                 height:"fit-content",
                             }} >
+                                react webcam
                                 <IonIcon style={{
                                     fontSize:"20px",
                                     color:"white",

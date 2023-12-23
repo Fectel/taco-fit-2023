@@ -2,8 +2,7 @@ import { Redirect, Route } from 'react-router-dom';
 import {IonApp, IonLoading, IonRouterOutlet, setupIonicReact} from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import Home from './pages/Home';
-import RecipesPage from "./pages/recipes-page/recipes-page";
-/* Core CSS required for Ionic components to work properly */
+
 import '@ionic/react/css/core.css';
 import React from "react";
 
@@ -69,9 +68,9 @@ const App: React.FC = () => {
               {/*  <MenuComboPage2 />*/}
               {/*</Route>*/}
 
-              <Route exact path="/menu-combo-page">
-                <MenuComboPage />
-              </Route>
+              {/*<Route exact path="/menu-combo-page">*/}
+              {/*  <MenuComboPage />*/}
+              {/*</Route>*/}
 
 
               <Route exact path="/">
@@ -88,9 +87,7 @@ const App: React.FC = () => {
               </Route>
 
 
-              <Route exact path="/recipes" >
-                <RecipesPage />
-              </Route>
+
               {/*<Route exact path="/recipes2" >*/}
               {/*  <RecipesPage2 />*/}
               {/*</Route>*/}

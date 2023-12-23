@@ -1,6 +1,9 @@
 import React from "react";
-import {IonCard, IonPage} from "@ionic/react";
+import {IonButton, IonCard, IonPage} from "@ionic/react";
 import {useHistory} from "react-router-dom";
+import {  signOut } from "firebase/auth";
+import {auth} from "../../firebase";
+
 
 
 const AdminHomePage = () => {
@@ -20,9 +23,9 @@ const AdminHomePage = () => {
                 href: "/home"
             },
             {
-                title: "Create New Recipe",
+                title: "Main Menu",
                 color: "#f6cd61",
-                href: "/recipes"
+                href: "/main-menu"
             },
             // {
             //     title: "Manage Finances",
@@ -91,6 +94,8 @@ const AdminHomePage = () => {
             Admin home page
             <AdminDashBoard />
 
+
+            <IonButton onClick={() => signOut(auth)}>Sign Out</IonButton>
         </div>
     )
 }
