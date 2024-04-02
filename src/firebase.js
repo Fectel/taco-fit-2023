@@ -229,6 +229,23 @@ export const addNewIngredient = async (ingredient) => {
 
     } = ingredient;
 
+    async function saveIngredientImgUrl() {
+        const imgRef = ref(storage, `/ingredient-imgs-ref/${ingredientName}`);
+
+        const response = await fetch(imgUrl);
+
+        const blob = await response.blob();
+
+        await uploadBytes(imgRef, blob).then((snapshot) => {
+            console.log("UPLOADED A BLOB!")
+        })
+
+        const url = await getDownloadURL(ref(storage, `/ingredient-imgs-ref/${ingredientName}`));
+
+        console.log('save picture ', url,);
+        return url;
+    }
+
     try {
         const docRef = await addDoc(collection( db,'ingredients-collection'), {...ingredient}
         )
@@ -237,8 +254,9 @@ export const addNewIngredient = async (ingredient) => {
         console.log(id, "<- docRef.Id")
         await setDoc(doc(db, 'ingredients-collection', docRef.id), {docId: id, ...ingredient})
 
-        const savedImgUrl = await saveNewIngredientPicture(imgUrl, id)
-        ingredient.imgURl = savedImgUrl
+        const savedImgUrl = await saveNewIngredientPicture(imgUrl, ingredientName)
+        ingredient.imgUrl = savedImgUrl
+        console.log("INGREDIENT!!!!!", ingredient)
         await setDoc(doc(db, 'ingredients-collection', docRef.id), {docId: id, ...ingredient})
 
 
@@ -252,59 +270,15 @@ export const addNewIngredient = async (ingredient) => {
 export const addToppingToCustomDatabase = async (dbPath, toppingData) => {
 
     console.log(toppingData, dbPath)
-    const {
-        ingredientName,
-        servingSizeGrams,
-        calories,
-        totalFat,
-        saturatedFat,
-        transFat,
-        monounsaturatedFat,
-        polyunsaturatedFat,
-        cholesterol,
-        sodium,
-        totalCarbohydrates,
-        dietaryFiber,
-        totalSugars,
-        addedSugars,
-        protein,
-        vitaminA,
-        vitaminB1,
-        vitaminB2,
-        vitaminB3,
-        vitaminB6,
-        vitaminB12,
-        vitaminC,
-        calcium,
-        chromium,
-        vitaminD,
-        vitaminE,
-        vitaminK,
-        iodine,
-        iron,
-        magnesium,
-        potassium,
-        phosphorus,
-        selenium,
-        zinc,
-        gramsPerTbsp,
-        imgUrl,
-        oxalates,
-        phytates,
-        lectins,
-        tannins,
-        saponins,
-        trypsinInhibitors,
-        docId
-
-    } = toppingData;
 
     try {
         // const docRef = await addDoc(collection( db,dbPath), {...toppingData})
 
-        await setDoc(doc(db, dbPath, docId), { ...toppingData})
+        console.log(toppingData)
+        await setDoc(doc(db, dbPath, toppingData.docId), { ...toppingData})
 
-        return (`Topping added to ${dbPath}: ` + ingredientName)
+        console.log(`Topping added to ${dbPath}:   ${toppingData.ingredientName}  ${toppingData}`)
+        return toppingData;
     }catch (error){
         console.log("Problem with adding new ingredient", error.message)
     }
@@ -402,9 +376,12 @@ export const saveRecipeImg = async (blobUrl, recipeName, recipeId ) => {
     console.log(blobUrl, recipeName, recipeId)
     const recipeImgRef = ref(storage, `taco-fit-recipes/${recipeId}/${recipeName}/recipeImg`);
 
+    console.log(recipeImgRef)
     const response = await fetch(blobUrl);
 
+    console.log(response)
     const blob = await response.blob();
+    console.log(blob)
 
     await uploadBytes(recipeImgRef, blob).then((snapshot) => {
         console.log("UPLOADED A BLOB!")
@@ -414,6 +391,16 @@ export const saveRecipeImg = async (blobUrl, recipeName, recipeId ) => {
 
     console.log('saved recipe picture ', url, );
     return url;
+}
+export const onDeleteRecipeImageFromStorage = async (recipeName, recipeId) => {
+    try{
+        const recipeImgRef = ref(storage, `taco-fit-recipes/${recipeId}/${recipeName}/recipeImg`);
+
+        await deleteObject(recipeImgRef)
+    }catch (e) {
+        console.log("error deleting recipe image",e.message)
+
+    }
 }
 export const saveNewEquipmentPicture = async  (blobUrl,name) => {
     console.log(name)
@@ -506,18 +493,41 @@ export const updateEquipmentEdit = async (equipmentName, imgUrl, docId) => {
     }
 }
 export const onSaveRecipe = async (data, recipeId) => {
-    console.log(data)
+    console.log(data, recipeId)
 
 
     try {
+
+        if( data.recipeImgUrl.startsWith("blob") ){
+            console.log("blob url")
+            const savedImgUrl = await saveRecipeImg(data.recipeImgUrl, data.recipeName, recipeId)
+            console.log(savedImgUrl)
+            data.recipeImgUrl = savedImgUrl
+        }
+
+        console.log(data)
         const docRef = await setDoc(doc( db,'recipes-collection', recipeId), {...data, docId: recipeId}
         )
-        await saveRecipeImg(data.imgUrl, data.recipeName, recipeId)
+        console.log("Recipe Saved : " + data)
         return ("Recipe Saved : " + data.recipeName)
     }catch (error){
         console.log("Problem with saving recipe", error.message)
     }
 
+}
+export const deleteRecipe = async (data) => {
+    try {
+        const recipeRef = doc(db, "recipes-collection", data.recipeId);
+
+        const recipeStorageRef = ref(storage, `taco-fit-recipes/${data.recipeId}`);
+
+        await deleteDoc(recipeRef)
+        await deleteObject(recipeStorageRef)
+        console.log("Deleted Recipe", data.recipeId)
+
+    }catch (e) {
+        console.log("Error Deleting Recipe", e.message)
+    }
 }
 export const onSaveRecipeCookingInstruction = async (data,recipeId, stepId, recipeName,) => {
     console.log(data)
@@ -532,6 +542,7 @@ export const onSaveRecipeCookingInstruction = async (data,recipeId, stepId, reci
                 if (i === 0) {
                     console.log(url, stepId, recipeName, recipeId, stepId)
                     const urlAndIds = await saveRecipeStepPicture(url, stepId, recipeName, recipeId, stepId)
+                    console.log(urlAndIds)
                     return urlAndIds;
 
                 } else {
@@ -541,6 +552,8 @@ export const onSaveRecipeCookingInstruction = async (data,recipeId, stepId, reci
 
 
                     const urlAndIds = await saveRecipeStepPicture(url, stepId, recipeName, recipeId, dateId.toISOString())
+                    console.log(urlAndIds)
+
                     return urlAndIds;
                 }
             })
@@ -567,12 +580,12 @@ export const onSaveRecipeCookingInstruction = async (data,recipeId, stepId, reci
         data.pictureUrlArray = urlsAndIds;
         console.log(data)
 
-        await setDoc(doc(db, `recipes-collection/${recipeId}/cooking-instructions/${data.dateId}`), {
-            ...data
-        })
+        // await setDoc(doc(db, `recipes-collection/${recipeId}/cooking-instructions/${data.dateId}`), {
+        //     ...data
+        // })
 
 
-        return ("Recipe step Saved : " + data)
+        return  data;
     }catch (error){
         console.log("Problem with saving recipe", error.message)
     }

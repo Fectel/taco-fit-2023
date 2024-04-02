@@ -1,0 +1,48 @@
+/* FortniteAddonsList.css */
+.fortnite-addons-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.fortnite-addon-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.fortnite-addon-item.selected {
+    background-color: #00bfff; /* Light blue background for selected items */
+}
+
+.addon-image img {
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.addon-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.addon-controls {
+    display: flex;
+    align-items: center;
+}
+
+.control-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    margin: 0 5px;
+}
+
+.quantity {
+    font-size: 16px;
+    margin: 0 5px;
+}

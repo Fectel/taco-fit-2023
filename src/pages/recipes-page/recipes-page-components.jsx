@@ -9,12 +9,12 @@ import {
     deleteAnyDoc,
     deleteCookingStep,
     deleteEquipment,
-    deleteIngredient,
+    deleteIngredient, deleteRecipe,
     deleteStepArrayPicture, deleteStepPicture,
     deleteStepVideo, deleteStepVideoFromCookingStep, deleteTempStepVideo,
     getRecipeId,
     loadAnyCollectionData,
-    loadIngredient, loadRecipe,
+    loadIngredient, loadRecipe, onDeleteRecipeImageFromStorage,
     onSaveRecipe,
     onSaveRecipeCookingInstruction,
     saveNewEquipmentPicture,
@@ -29,7 +29,7 @@ import {
     IonCard,
     IonCardContent,
     IonCardHeader,
-    IonCardTitle, IonFab, IonFabButton,
+    IonCardTitle, IonContent, IonFab, IonFabButton,
     IonIcon, IonInput,
     IonItem,
     IonLabel, IonList, IonLoading, IonSelect, IonSelectOption
@@ -247,6 +247,7 @@ export function CreateNewRecipe({setRecipePageStep, tempPictureUrlArray, setTemp
 
     const [ recipeImgUrl, setRecipeImgUrl ] = useLocalStorage( `recipeImgUrl`, "")
 
+    const [renderSaveAsCard, setRenderSaveAsCard ] = useState(false)
     let loaded;
 
 
@@ -348,10 +349,46 @@ export function CreateNewRecipe({setRecipePageStep, tempPictureUrlArray, setTemp
 
         // if (recipeEquipmentList.length > 1 && recipeIngredientsList.length > 1 && recipeName !== "" && recipeStepsListTextArray.length > 1){
             return (
-                <IonButton disabled={disabled} onClick={() => onSaveRecipeClick()} color="secondary" size="block">Save Recipe</IonButton>
+                <IonButton disabled={disabled} onClick={() => setRenderSaveAsCard(true) } color="secondary" size="block">Save Recipe</IonButton>
 
             )
         // }
+
+    }
+    function renderSaveAsCardFunction(){
+        const handleSaveAsRecipe = () => {
+            // Add logic for saving as recipe
+            onSaveRecipeClick()
+
+            console.log('Saved as Recipe');
+        };
+
+        const handleSaveAsIngredient = () => {
+            // Add logic for saving as ingredient
+            console.log('Saved as Ingredient');
+        };
+
+        console.log("rendering Save as card")
+        return (
+            <div className="ion-padding">
+                <IonCard className="ion-text-center">
+                    <IonCardHeader>
+                        <IonCardTitle>Save Recipe As</IonCardTitle>
+                    </IonCardHeader>
+
+                    <IonCardContent>
+                        <IonButton expand="full" onClick={handleSaveAsRecipe}>
+                            Save as Recipe
+                        </IonButton>
+
+                        <IonButton expand="full" onClick={handleSaveAsIngredient}>
+                            Save as Ingredient
+                        </IonButton>
+                    </IonCardContent>
+                </IonCard>
+            </div>
+        );
+
 
     }
     function renderCreateNewRecipePage(){
@@ -360,83 +397,86 @@ export function CreateNewRecipe({setRecipePageStep, tempPictureUrlArray, setTemp
         switch (recipeCreationStep) {
 
             case "Recipe Creation":
+
                 return (
                     <div>
-                        {/*<div style={{*/}
-                        {/*    // border: "solid",*/}
-                        {/*    width:"fit-content",*/}
-                        {/*    margin: "auto",*/}
-                        {/*}}>*/}
-                        {/*    <IonIcon*/}
-                        {/*        onClick={() => setRecipeCreationStep("Recipe Preview")}*/}
-                        {/*        style={{fontSize: "24px" , cursor: "pointer"}} icon={recipePreviewIcon} />*/}
-                        {/*    <IonIcon*/}
+                        {renderSaveAsCard ? renderSaveAsCardFunction() : (
+                            <div>
+                                {/*<div style={{*/}
+                                {/*    // border: "solid",*/}
+                                {/*    width:"fit-content",*/}
+                                {/*    margin: "auto",*/}
+                                {/*}}>*/}
+                                {/*    <IonIcon*/}
+                                {/*        onClick={() => setRecipeCreationStep("Recipe Preview")}*/}
+                                {/*        style={{fontSize: "24px" , cursor: "pointer"}} icon={recipePreviewIcon} />*/}
+                                {/*    <IonIcon*/}
 
-                        {/*        style={{fontSize: "24px", color: "blue", cursor: "pointer"}} icon={recipeCreationIcon} />*/}
-                        {/*    <IonIcon icon={menuPageIcon}*/}
-                        {/*             style={{fontSize: "24px", cursor: "pointer"}}*/}
-                        {/*             onClick={() => setRecipeCreationStep("Recipe Menu Page")}*/}
-                        {/*    />*/}
-                        {/*</div>*/}
-                        <div
-                            style={{
-                                position: "absolute",
-                                right: ".5em",
-                                zIndex: "10",
-                                cursor: "pointer"
-                            }}
-                            onClick={() => deleteCreateNewRecipe()}
-                        >X</div>
-                        <IonCardHeader>
-                            <IonCardTitle style={{textAlign: "center"}}>
-                                Create New Recipe
-                            </IonCardTitle>
-                        </IonCardHeader>
-                        <IonCardContent style={{ padding: 0}}>
+                                {/*        style={{fontSize: "24px", color: "blue", cursor: "pointer"}} icon={recipeCreationIcon} />*/}
+                                {/*    <IonIcon icon={menuPageIcon}*/}
+                                {/*             style={{fontSize: "24px", cursor: "pointer"}}*/}
+                                {/*             onClick={() => setRecipeCreationStep("Recipe Menu Page")}*/}
+                                {/*    />*/}
+                                {/*</div>*/}
+                                <div
+                                    style={{
+                                        position: "absolute",
+                                        right: ".5em",
+                                        zIndex: "10",
+                                        cursor: "pointer"
+                                    }}
+                                    onClick={() => deleteCreateNewRecipe()}
+                                >X</div>
+                                <IonCardHeader>
+                                    <IonCardTitle style={{textAlign: "center"}}>
+                                        Create New Recipe
+                                    </IonCardTitle>
+                                </IonCardHeader>
+                                <IonCardContent style={{ padding: 0}}>
 
-                            <RecipeNameInput
-                            recipeName={recipeName}
-                            setRecipeName={setRecipeName}
-                            />
-
-                            {recipeName.length > 3 && (
-                                <>
-                                    <RecipeEquipmentComponent
-                                        recipeEquipmentList={recipeEquipmentList}
-                                        setRecipeEquipmentList={setRecipeEquipmentList}
-                                    />
-                                    <RecipeIngredientsComponent
-                                        recipeIngredientsList={recipeIngredientsList}
-                                        setRecipeIngredientsList={setRecipeIngredientsList}
-
-                                    />
-                                    <RecipeStepsListComponent
-                                        recipeStepsListTextArray={recipeStepsListTextArray}
-                                        setRecipeStepsListTextArray={setRecipeStepsListTextArray}
+                                    <RecipeNameInput
                                         recipeName={recipeName}
-                                        recipeId={recipeId}
-                                        tempPictureUrlArray={tempPictureUrlArray}
-                                        setTempPictureUrlArray={setTempPictureUrlArray}
+                                        setRecipeName={setRecipeName}
                                     />
 
-                                    <RecipeNutritionFacts
-                                        recipeIngredientsList={recipeIngredientsList}
-                                    />
-                                    <AddRecipePicture
-                                        recipeImgUrl={recipeImgUrl}
-                                        setRecipeImgUrl={setRecipeImgUrl}
-                                        recipeName={recipeName}
-                                        recipeID={recipeId}
+                                    {recipeName.length > 3 && (
+                                        <>
+                                            <RecipeEquipmentComponent
+                                                recipeEquipmentList={recipeEquipmentList}
+                                                setRecipeEquipmentList={setRecipeEquipmentList}
+                                            />
+                                            <RecipeIngredientsComponent
+                                                recipeIngredientsList={recipeIngredientsList}
+                                                setRecipeIngredientsList={setRecipeIngredientsList}
 
-                                    />
-                                    {renderSaveRecipeButton()}
-                                </>
-                            )}
+                                            />
+                                            <RecipeStepsListComponent
+                                                recipeStepsListTextArray={recipeStepsListTextArray}
+                                                setRecipeStepsListTextArray={setRecipeStepsListTextArray}
+                                                recipeName={recipeName}
+                                                recipeId={recipeId}
+                                                tempPictureUrlArray={tempPictureUrlArray}
+                                                setTempPictureUrlArray={setTempPictureUrlArray}
+                                            />
+
+                                            <RecipeNutritionFacts
+                                                recipeIngredientsList={recipeIngredientsList}
+                                            />
+                                            <AddRecipePicture
+                                                recipeImgUrl={recipeImgUrl}
+                                                setRecipeImgUrl={setRecipeImgUrl}
+                                                recipeName={recipeName}
+                                                recipeID={recipeId}
+
+                                            />
+                                            {renderSaveRecipeButton()}
+                                        </>
+                                    )}
 
 
 
 
-{/*
+                                    {/*
                             <div style={{
                                 display: "flex",
                                 flexDirection: "column"
@@ -494,9 +534,12 @@ export function CreateNewRecipe({setRecipePageStep, tempPictureUrlArray, setTemp
                                 recipeIngredientsList={recipeIngredientsList}
                             />*/}
 
-                        </IonCardContent>
+                                </IonCardContent>
 
 
+                            </div>
+
+                        )}
                     </div>
                 )
                 break;
@@ -713,7 +756,7 @@ export function EditRecipe({setRecipePageStep, data, tempPictureUrlArray, setTem
     // const [ recipeImgUrl, setRecipeImgUrl ] = useLocalStorage( `recipeImgUrl`,data.recipeImgUrl)
 
     const [ disabled, setDisabled ] = useState(true)
-    const [recipeId , setRecipeId ] = useState(data.recipeId)
+    const [recipeId , setRecipeId ] = useState(data.docId)
     // const [recipeId , setRecipeId ] = useLocalStorage("recipeId", data.recipeId)
     const [reset, setReset ] = useState(false);
     let loaded;
@@ -752,6 +795,7 @@ export function EditRecipe({setRecipePageStep, data, tempPictureUrlArray, setTem
     }
     async function onSaveRecipeClick() {
         let recipeObj = {
+            recipeId,
             recipeName,
             recipeEquipmentList,
             recipeIngredientsList,
@@ -849,7 +893,7 @@ export function EditRecipe({setRecipePageStep, data, tempPictureUrlArray, setTem
                                 zIndex: "10",
                                 cursor: "pointer"
                             }}
-                            onClick={() => deleteCreateNewRecipe()}
+                            onClick={() => setRecipePageStep("search")}
                         >X</div>
                         <IonCardHeader>
                             <IonCardTitle style={{textAlign: "center"}}>
@@ -1209,6 +1253,7 @@ function RecipeIngredientsComponent({recipeIngredientsList, setRecipeIngredients
     const [inputState, setInputState] = useState("")
     let result;
     let loadedData;
+    console.log(recipeIngredientsList, "LIST")
     async function loadAndFilterData(e) {
 
 
@@ -1271,7 +1316,7 @@ function RecipeIngredientsComponent({recipeIngredientsList, setRecipeIngredients
                             <IonCardTitle
                                 style={{textAlign: "center"}}
                             >
-                                Ingredient Search
+                                Ingredient Search ok!!
                             </IonCardTitle>
                         </IonCardHeader>
 
@@ -1420,6 +1465,7 @@ function RecipeSearchLoadedDataDisplay({
 }){
 
 
+
     function onEditRecipeClick(){
         setChosenRecipe(data)
         setRecipePageStep("edit")
@@ -1435,6 +1481,19 @@ function RecipeSearchLoadedDataDisplay({
         console.log(menuArray, temp)
         setCarouselStep("")
     }
+    async function onDeleteIconClick(){
+        console.log(data)
+
+        let text = `Are you sure you want to delete the recipe? ${data.recipeName}`
+        if ( window.confirm(text) === true){
+            await deleteRecipe(data)
+
+        }else{
+            console.log("Didn't want to delete after all!")
+
+        }
+    }
+
     console.log(data)
     return (
         <IonCard >
@@ -1465,9 +1524,10 @@ function RecipeSearchLoadedDataDisplay({
 
                     >
                         <div
-                            // onClick={() => onDeleteIconClick()}
+                            onClick={() => onDeleteIconClick()}
                         >
                             <IonIcon size="small"
+
                                      style={{
                                          margin: "0 .5em",
                                          zIndex:"10",
@@ -1595,6 +1655,7 @@ function IngredientsSearchLoadedDataDisplay({data,
                                           }){
 
 
+    console.log(data, "DATA!!")
     function onSearchDataDisplayClick(data){
         setInputState("")
         setFilteredData([""])
@@ -3443,15 +3504,15 @@ function StepsListListComponent({
 
         let res = await onSaveRecipeCookingInstruction(tempObj, recipeId,stepDateId, recipeName,stepDateId)
         console.log( res ,tempObj)
-        temp[index] = tempObj;
+        temp[index] = res;
         console.log(temp)
 
         // const newPicArr =
 
 
-        setPictureUrlArray([...tempObj.pictureUrlArray])
+        setPictureUrlArray([...res.pictureUrlArray])
         setTempPictureUrlArray([])
-        console.log(tempPictureUrlArray, pictureUrlArray, tempObj.pictureUrlArray)
+        console.log(tempPictureUrlArray, res.pictureUrlArray, tempObj.pictureUrlArray)
         setRecipeStepsListTextArray([...temp, ""])
 
     }
@@ -3536,6 +3597,8 @@ function StepsListListComponent({
             setTempPictureUrlArray(tempPictureArr)
             setUpdatingPictureArray(true)
 
+        }else{
+            console.log("Event.targe files not larger than 0")
         }
 
     };
@@ -3936,6 +3999,7 @@ function RecipeNutritionFacts({recipeIngredientsList, recipeIngredientComponentS
     const [finalMass, setFinalMass ] = useLocalStorage('finalMass', 0)
     const [customAmount, setCustomAmount ] = useState(0)
 
+
     // const [done, setDone] = useState(false)
     function loadIngredientFacts(){
 //very good function for getting rid of 0's but ened up not even needing it lol
@@ -4210,7 +4274,7 @@ function RecipeNutritionFacts({recipeIngredientsList, recipeIngredientComponentS
 
     function renderCustomAmountNutrition(){
         return (
-            <div style={{width: "30em", margin: "auto"}}>
+            <div style={{width: "fit-content", marginTop: "1em", margin: "auto"}}>
 
 
                 <div>
@@ -4467,8 +4531,8 @@ function RecipeNutritionFacts({recipeIngredientsList, recipeIngredientComponentS
     }
 
     return (
-        <div>
-            <div>
+        <div style={{ width:"fit-content", margin: "auto"}}>
+            <div >
                 {/*{vitaminAndMineralsNameArray && (*/}
                 <div
                     style={{
@@ -4476,6 +4540,7 @@ function RecipeNutritionFacts({recipeIngredientsList, recipeIngredientComponentS
                         width: "15em",
                         padding: ".25em",
                         opacity: "1",
+                        margin: "auto",
                     }}
                 >
 
@@ -4742,36 +4807,78 @@ function RecipeNutritionFacts({recipeIngredientsList, recipeIngredientComponentS
 
 
                 </div>
-                Mass <input type="number" min={0} value={finalMass} onChange={(e) => setFinalMass(e.target.value)}/>grams
-                {finalMass > 0 && (
-                    <div>
-                        Custom Amount <input type="number" min={0} value={customAmount} onChange={(e) => setCustomAmount(e.target.value)}/>grams
+                <IonCard>
+                    <IonCard>
+                        <IonCardHeader>
+                            <IonCardTitle>
+                                Total Mass
+                            </IonCardTitle>
+                        </IonCardHeader>
+                        <IonCardContent>
+                            <div style={{width: "fit-content", margin:"auto"}}>
+                                <input style={{width: "3em", marginRight:".5em"}} type="number" min={0} value={finalMass} onChange={(e) => setFinalMass(e.target.value)}/>grams
 
-                        {customAmount > 0 && ( <div>
-                                {renderCustomAmountNutrition()}
                             </div>
-                        )}
-                    </div>
+                        </IonCardContent>
+                    </IonCard>
+
+
+                        <div style={{width: "fit-content", margin:"auto"}}>
+                            {finalMass > 0 && (
+                                <IonCard>
+                                    <IonCardHeader>
+                                        <IonCardTitle>
+                                            Custom Amount
+                                        </IonCardTitle>
+                                    </IonCardHeader>
+                                    <IonCardContent>
+                                        <div style={{width: "fit-content", margin: "auto", display:"flex", flexDirection: "column"}}>
+                                           <div style={{width: "fit-content", margin: "auto"}}>
+                                               <input  style={{width: "3em", marginRight:".5em"}}
+                                                       type="number" min={0} value={customAmount}
+                                                       onChange={(e) => setCustomAmount(e.target.value)}
+                                               />
+                                               grams
+
+                                           </div>
+
+                                            {customAmount > 0 && ( <div>
+                                                    {renderCustomAmountNutrition()}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                    </IonCardContent>
+
+
+                                </IonCard>
+                            )}
+                        </div>
 
 
 
-                    )}
+
+                </IonCard>
+
+
+
+
             </div>
          <div>
-             <div style={{
-                 border:"solid thin blue",
-                 width: "30em",
-                 padding: "2em"
-             }}>
-                 <ChartTutorial
-                 nutritionTotals={nutritionalTotals}
-                 customAmount={customAmount}
-                 finalMass={finalMass}
-                 />
+             {/*<div style={{*/}
+             {/*    border:"solid thin blue",*/}
+             {/*    width: "30em",*/}
+             {/*    padding: "2em"*/}
+             {/*}}>*/}
+             {/*    <ChartTutorial*/}
+             {/*    nutritionTotals={nutritionalTotals}*/}
+             {/*    customAmount={customAmount}*/}
+             {/*    finalMass={finalMass}*/}
+             {/*    />*/}
 
 
 
-             </div>
+             {/*</div>*/}
 
 
          </div>
@@ -4846,9 +4953,11 @@ export function AddIngredientNutritionalFacts({
     const [ phytochemicals, setPhytochemicals ] = useState(0)
 
 
+    const [price, setPrice] = useState(0);
 
     const imageInputRef = useRef();
 
+    const [estCost, setEstCost] = useState(0)
     const [buttonEnabled, setButtonEnabled ] = useState(false)
 
 
@@ -4905,6 +5014,8 @@ export function AddIngredientNutritionalFacts({
             tannins,
             saponins,
             trypsinInhibitors,
+            estCost,
+            // price,
             // phytochemicals,
         }
         // setShowAddNewIngredientComponent(false)
@@ -5487,6 +5598,11 @@ export function AddIngredientNutritionalFacts({
                                         <IonIcon icon={uploadPhotoIcon}/>
                                     </IonButton>
                                 </div>
+                                <div>
+                                    <div>Estimated Cost:</div>
+                                    <input value={estCost} onChange={(e) => setEstCost(e.target.value)}/>
+                                </div>
+
                             </div>
 
 
@@ -6090,7 +6206,14 @@ function EditIngredientInputs({ingredient, editIngredientDocId, setRecipeIngredi
                                         backgroundColor: "red"}}>Add Photo</div>
 
                                 ): (
-                                    <img src={imgUrl} />
+                                    <div style={{
+                                        objectFit: "contain",
+                                        // width: "100%",
+                                    }} >
+                                        <img
+                                            // style={{width: "100%"}}
+                                            src={imgUrl} />
+                                    </div>
                                 )}
 
 
@@ -6281,6 +6404,10 @@ function AddRecipePicture({
 
     };
 
+    async function onDeleteImageFromRecipe() {
+        await onDeleteRecipeImageFromStorage(recipeName, recipeId)
+        setRecipeImgUrl("")
+    }
     return (
         <div style={{
             border:"solid",
@@ -6305,24 +6432,43 @@ function AddRecipePicture({
 
 
             </div>
-            <div style={{
-                border:"solid",
-                width: "fit-content",
-                margin: "auto",
-            }}>
-                <input type="file" accept="image/*" hidden
-                       ref={imageInputRef}
-                       onChange={handleFileChangeImage}
-                />
-                <IonButton
-                    style={{
+            <div>
+                {recipeImgUrl === "" ? (
+                    <div style={{
+                        border:"solid",
                         width: "fit-content",
-                        margin: "auto"}}
-                    onClick={() => imageInputRef.current.click()}
-                >
-                    <IonIcon icon={uploadPhotoIcon}/>
-                </IonButton>
+                        margin: "auto",
+                    }}>
+                        <input type="file" accept="image/*" hidden
+                               ref={imageInputRef}
+                               onChange={handleFileChangeImage}
+                        />
+                        <IonButton
+                            style={{
+                                width: "fit-content",
+                                margin: "auto"}}
+                            onClick={() => imageInputRef.current.click()}
+                        >
+                           <IonIcon icon={uploadPhotoIcon}/>
+                        </IonButton>
+                    </div>
+                ):(<div style={{
+                    border:"solid",
+                    width: "fit-content",
+                    margin: "auto",
+                }}>
+                    <IonButton
+                        color="danger"
+                        style={{
+                            width: "fit-content",
+                            margin: "auto"}}
+                        onClick={() => onDeleteImageFromRecipe()}
+                    >
+                        <IonIcon icon={deleteIcon}/>
+                    </IonButton>
+                </div>)}
             </div>
+
             {/*<div*/}
 
             {/*    style={{display: "flex",*/}

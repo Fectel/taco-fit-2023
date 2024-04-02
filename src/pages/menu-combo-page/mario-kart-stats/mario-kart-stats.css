@@ -1,0 +1,57 @@
+/* mario-kart-stats.css */
+
+.kart-stats-container {
+    background-color: #fff; /* White background */
+    border: 2px solid #0077c8; /* Mario Kart blue */
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
+}
+
+.stat-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.stat-label {
+    font-weight: bold;
+    margin-right: 15px;
+    font-size: 16px; /* Increase font size */
+    color: #0077c8; /* Mario Kart blue for labels */
+}
+
+.stat-bar-container {
+    display: flex;
+    flex-direction: column; /* Display stat bar and value in a column */
+    align-items: flex-start; /* Align items to the start of the column */
+}
+
+.stat-bar {
+    width: 20em; /* Set the width of the stat bar */
+    background-color: #ffcc29; /* Mario Kart yellow */
+    border-radius: 15px; /* Make the bar rounded */
+    margin-bottom: 5px; /* Add margin between stat bar and value */
+}
+
+.stat-value {
+    color: #333;
+    font-weight: bold;
+}
+
+.recommended-line,
+.limit-line {
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    background-color: #ff0000; /* Red color for lines */
+}
+
+.recommended-line {
+    left: calc(50% - 1px);
+}
+
+.limit-line {
+    left: calc(80% - 1px); /* Adjust the position based on your desired limit */
+}

@@ -23,24 +23,36 @@ import {
     searchCircleOutline as searchIcon, trashOutline as deleteIcon
 } from "ionicons/icons";
 import {AddIngredientNutritionalFacts} from "../recipes-page/recipes-page-components";
+import KartStatsComponent from "./mario-kart-stats/kart-stats-component";
+import NutrientProgressBar from "./nutrient-progress-bar/nutrient-progress-bar";
+import ChooseYourTortillaComponent from "./choose-your-tortilla-component/choose-your-tortilla-component";
 
 
 export default function MenuItemPage({menuItemId}){
 
     const [ menuItemPageSwitchCase, setMenuItemPageSwitchCase ] = useState("")
     const [addOnsFromFirebase, setAddOnsFromFirebase ] = useState([])
+    const [tortillaOptionsFromFirebase, setTortillaOptionsFromFirebase ] = useState([])
     const imageInputRef = useRef();
     const [ menuItemImgUrl, setMenuItemImgUrl ] = useState("")
     const [ menuItemName, setMenuItemName ] = useState("")
+
+
 
     const [addOnsCartArray, setAddOnsCartArray ] = useState([])
 
 
     const [ addOnsChange, setAddOnsChange ] = useState(false)
 
-    useEffect(() => {
+    useEffect(() =>  {
+
+        console.log(addOnsFromFirebase)
+        if( addOnsFromFirebase.length === 0 ) {
+            console.log("Loading Add Ons From FB")
+            loadAddOnsFromFirebase()
+        }
+
         loadMenuItemImg()
-        loadAddOnsFromFirebase()
         // console.log(addOnsCartArray)
     },[])
 
@@ -48,13 +60,26 @@ export default function MenuItemPage({menuItemId}){
         const resultAddOns = await loadAnyCollectionData(`/recipes-collection/${menuItemId}/addOns`)
         let addOnsTemp = [];
 
+        console.log("loadAddOnsFromFirebase", resultAddOns )
         resultAddOns.docs.map(doc => {
             addOnsTemp = [...addOnsTemp, doc.data()]
             console.log(doc.data())
 
         })
+        console.log(addOnsFromFirebase, addOnsTemp)
+        setAddOnsFromFirebase([...addOnsTemp])
 
-        setAddOnsFromFirebase(addOnsTemp)
+        const resultTortillaOptions = await loadAnyCollectionData(`/recipes-collection/${menuItemId}/addOns`)
+        let tortillaOptionsTemp = [];
+
+        console.log("loadTortillaOptionsFromFirebase", resultTortillaOptions )
+        resultTortillaOptions.docs.map(doc => {
+            tortillaOptionsTemp = [...tortillaOptionsTemp, doc.data()]
+            console.log(doc.data())
+
+        })
+        console.log(tortillaOptionsFromFirebase, tortillaOptionsTemp)
+        setTortillaOptionsFromFirebase([...tortillaOptionsTemp])
     }
 
     const handleFileChangeImage = async (event) =>  {
@@ -81,175 +106,125 @@ export default function MenuItemPage({menuItemId}){
         setMenuItemName(result.data().recipeName)
     }
 
+    const handleTortillaSelection = (selectedTortilla) => {
+        console.log(`Selected Tortilla: ${selectedTortilla.name}`);
+    };
+
     function renderMenuItemPage(){
+        console.log(addOnsFromFirebase)
 
         switch (menuItemPageSwitchCase) {
 
             case "":
-                return ( <div style={{
+                return( <div style={{
                         display: "flex",
                         width: "100%",
                         backgroundColor: "yellow",
+                        padding: "1em",
+                        boxSizing: "border-box",
                     }}>
                         <IonCard style={{
-                            // border: "solid thick red",
                             width: "95%",
                             height: "95%",
-                            margin: "auto"
+                            margin: "auto",
+                            position: "relative",
                         }}>
-                            <div style={{
-                                position: "absolute",
-                                right: "1em",
-                                // marginBottom: "1em"
-                            }}>X</div>
-
-                            <div style={{
-                                height:"fit-content",
-                                minWidth: "6em",
-                                fontSize:".7rem",
-                                border: "solid thin",
-                                margin: ".7em .3em",
-                                cursor: "pointer",
-                                textAlign:"center",
-                                // margin: "auto"
-                            }}
-
-                                // onClick={() => onAddMusicClick(ins.name)}
-                                 onClick={() => imageInputRef.current.click()}
-
-                            >
-                                <input type="file" accept="image/*" hidden
-                                       ref={imageInputRef}
-                                       onChange={handleFileChangeImage}
-                                />
-
-
-                                {menuItemImgUrl === "" ? (
-                                    <div style={{
-                                        // border:"solid thin",
-                                        margin:"auto,",
-                                        // padding: "2em"
-                                        width: "100%"
-
-                                    }}>+ add image</div>
-                                ):(
-                                    <img style={{width: "80%",margin: "auto"}} src={menuItemImgUrl}  alt="music"/>
-
-                                )}
-
-                            </div>
                             <IonCardTitle style={{
                                 textAlign: "center",
-                                // marginTop: "1em"
+                                marginTop: "1em",
+                                fontSize:"1.5rem",
+                                fontWeight: "bold",
                             }}>
                                 {menuItemName}
                             </IonCardTitle>
+                            <div style={{
+                                position: "absolute",
+                                top: "1em",
+                                right: "1em",
+                                cursor: "pointer",
+                                fontSize: "1.2rem",
+                            }}>X</div>
 
-                            <IonCardContent style={{
-                                // padding: 0,
-                            }}>
 
+
+
+                            <IonCardContent style={{}}>
+                                <div style={{
+                                    height: "fit-content",
+                                    minWidth: "6em",
+                                    fontSize: ".7rem",
+                                    border: "solid thin",
+                                    margin: ".7em .3em",
+                                    cursor: "pointer",
+                                    textAlign: "center",
+                                    overflow: "hidden",
+                                    position: "relative",
+                                }}
+                                     onClick={() => imageInputRef.current.click()}
+                                >
+                                    <input type="file" accept="image/*" hidden
+                                           ref={imageInputRef}
+                                           onChange={handleFileChangeImage}
+                                    />
+
+                                    {menuItemImgUrl === "" ? (
+                                        <div style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            color: "gray",
+                                        }}>+ Add Image</div>
+                                    ) : (
+                                        <img style={{ width: "100%", height: "15em", objectFit: "cover" }} src={menuItemImgUrl} alt="music" />
+                                    )}
+                                </div>
 
                                 <IonCard style={{
-
-                                    // border:"solid",
-                                    // alignContent: "center",
-                                    // justifyContent: "center"
-
-
-                                }}>
-                                    {/*<h2>Add Ons & Toppings</h2>*/}
-
-
-                                    <div style={{
-                                        display: "flex",
-                                        flexDirection: "row",
-                                        flexWrap: "wrap",
-                                        // width: "90%",
-                                        // backgroundColor:"blue",
-                                        // margin:"auto",
-                                        justifyContent: "space-around"
-                                        // padding: "0"
-                                    }}>{addOnsCartArray !== [] && addOnsCartArray.map((addOn, i) => (
-                                        <SelectedAddOnComponent
-                                            data={addOn}
-                                            i={i}
-                                            key={i}
-                                            addOnsList={addOnsCartArray}
-                                            setAddOnsList={setAddOnsCartArray}
-                                            setAddOnsChange={setAddOnsChange}
-                                        />
-                                    ))}</div>
-                                    {/*<div style={{margin:"auto", width:"fit-content"}}>*/}
-                                    <IonButton fill="outline"  expand="block" onClick={() => setMenuItemPageSwitchCase("addOns")}> + Add Ons & Toppings</IonButton>
-
-                                    {/*</div>*/}
-                                </IonCard>
-                                <IonCard style={{
-                                    // backgroundColor: "rgba(255,241,90,0.2)"
+                                    marginBottom: "1em",
                                 }}>
 
+                                    <div style={{display:"flex", flexDirection: "row",
+                                        overflowX: "auto",
+                                        // flexWrap: "wrap"
+                                    }}>
+                                        {addOnsFromFirebase.map((addOn, i) => (
+                                            // <div style={{ width:"fit-content", }}>
 
+                                                        <AddOnComponent
+                                                            data={addOn}
+                                                            i={i}
+                                                            key={i}
+                                                            addOnsFromFirebase={addOnsFromFirebase}
+                                                            setAddOnsCartArray={setAddOnsCartArray}
+                                                            addOnsCartArray={addOnsCartArray}
+                                                        />
+                                            // </div>
 
-                                    {/*<div style={{*/}
-                                    {/*    display: "flex",*/}
-                                    {/*    flexDirection: "row",*/}
-                                    {/*    flexWrap: "wrap",*/}
-                                    {/*    // width: "90%",*/}
-                                    {/*    // backgroundColor:"blue",*/}
-                                    {/*    margin:"auto",*/}
-                                    {/*    justifyContent: "space-around"*/}
-                                    {/*}}>{premiumAddOnsList && premiumAddOnsList?.map((addOn, i) => (*/}
-                                    {/*    <SelectedAddOnComponent*/}
-                                    {/*        data={addOn}*/}
-                                    {/*        i={i}*/}
-                                    {/*        addOnsList={premiumAddOnsList}*/}
-                                    {/*        setAddOnsList={setPremiumAddOnsList}*/}
-                                    {/*        setAddOnsChange={setAddOnsChange}*/}
-                                    {/*    />*/}
-                                    {/*))}</div>*/}
-                                    {/*    <IonButton fill="outline" expand="block" onClick={() => setMenuComboPageStep("premium")}> + Premium Add Ons</IonButton>*/}
+                                        ))}
+                                    </div>
 
+                                    <IonButton fill="outline" expand="block" onClick={() => setMenuItemPageSwitchCase("addOns")}>+ Add Ons & Toppings</IonButton>
                                 </IonCard>
 
-                                {/*{renderComboItemPremiumOptions()}*/}
-                                {/*<IonCard style={{*/}
-                                {/*    // backgroundColor: "rgba(255,241,90,0.2)"*/}
-                                {/*}}>*/}
+                                <IonCard>
+                                    {/* Additional premium add-ons or other sections go here */}
+                                </IonCard>
 
-                                {/*    <div style={{*/}
-                                {/*        display: "flex",*/}
-                                {/*        flexDirection: "row",*/}
-                                {/*        flexWrap: "wrap",*/}
-                                {/*        // width: "90%",*/}
-                                {/*        // backgroundColor:"blue",*/}
-                                {/*        margin:"auto",*/}
-                                {/*        justifyContent: "space-around"*/}
-                                {/*    }}>{saucesList && saucesList.map((addOn, i) => (*/}
-                                {/*        <SelectedAddOnComponent*/}
-                                {/*            data={addOn}*/}
-                                {/*            i={i}*/}
-                                {/*            addOnsList={saucesList}*/}
-                                {/*            setAddOnsList={setSaucesList}*/}
-                                {/*            setAddOnsChange={setAddOnsChange}*/}
-                                {/*        />*/}
-                                {/*    ))}</div>*/}
-                                {/*    <IonButton fill="outline" expand="block" onClick={() => setMenuComboPageStep("sauces")}> + Sauces</IonButton>*/}
+                                {/* More card sections if needed */}
 
-
-                                {/*</IonCard>*/}
-
-                                {/*{renderComboItemSauceOptions()}*/}
-
-                                {/*{renderCartAndBuyNowButtons()}*/}
-
+                                <AddOnCartComponent
+                                    addOnsCartArray={addOnsCartArray}
+                                    setMenuItemPageSwitchCase={setMenuItemPageSwitchCase}
+                                />
 
                             </IonCardContent>
                         </IonCard>
                     </div>
+
+
                 )
-
-
             case "addOns":
                 return <AddOnsPage
                     addOnsFromFirebase={addOnsFromFirebase}
@@ -274,7 +249,7 @@ function AddOnsPage({addOnsFromFirebase, setAddOnsFromFirebase,
     function renderTotal(){
         let total = 0;
         addOnsCartArray.map((addOn) => {
-            total += addOn.comboAmount * addOn.unitPrice
+            total += addOn.unitAmount * addOn.unitPrice
         })
         return total
     }
@@ -325,12 +300,14 @@ function AddOnsPage({addOnsFromFirebase, setAddOnsFromFirebase,
     )
 
 }
+
 function AddOnComponent({data, i, addOnsFromFirebase, addOnsCartArray, setAddOnsCartArray
 
                         }){
-    console.log(data.ingredientName, data.comboAmount)
+    console.log(data.ingredientName, data.unitAmount, data)
 
     const [comboAmount , setComboAmount ] = useState(data.comboAmount === undefined ? (0):(data.comboAmount))
+  const [ macroStats, setMacroStats ] = useState([])
     useEffect(() => {
         loadAndFilterAddOns()
         console.log(addOnsCartArray)
@@ -338,89 +315,142 @@ function AddOnComponent({data, i, addOnsFromFirebase, addOnsCartArray, setAddOns
 
     function calculateAndRenderAddOnsNutritionProfile(){
 
-        console.log(data)
-        let calories, protein, fat,  carbohydrates = 0;
-        // let protein = 0;
+
+        function multiplyValuesInArray() {
+            console.log(addOnsCartArray)
+            return addOnsCartArray?.map((item) => {
+                const multipliedItem = {};
 
 
-        switch (data.gramsOrCups) {
+                Object.keys(item).forEach((key) => {
+                    const originalValue = item[key];
+                    const numericValue = Number(originalValue);
 
-            case "item":
-                calories = (data.calories * data.unitAmount * comboAmount)
-                protein = (data.protein * data.unitAmount * comboAmount)
-                carbohydrates = (data.totalCarbohydrates * data.unitAmount * comboAmount)
-                fat =  (data.totalFat * data.unitAmount * comboAmount)
-                return (
-                    <div>
-                        <div>Protein {protein} g</div>
-                        <div>Carbohydrates {carbohydrates} g</div>
-                        <div>Fat {fat} g</div>
-                        <div>Calories {calories}</div>
-                    </div>
-                )
-                break;
-            case "grams":
-                calories = (data.calories * data.unitAmount * comboAmount) / data.gramsPerTbsp
-                protein = (data.protein * data.unitAmount * comboAmount) / data.gramsPerTbsp
-                carbohydrates = (data.totalCarbohydrates * data.unitAmount * comboAmount)  / data.gramsPerTbsp
-                fat =  (data.totalFat * data.unitAmount * comboAmount) / data.gramsPerTbsp
-                return (
-                    <div>
-                        <div>Protein {protein} g</div>
-                        <div>Carbohydrates {carbohydrates} g</div>
-                        <div>Fat {fat} g</div>
-                        <div>Calories {calories}</div>
-                    </div>
-                )
-                break;
-            case "tsp":
-                calories = (data.calories * data.unitAmount * comboAmount) / 3
-                protein = (data.protein * data.unitAmount * comboAmount) / 3
-                carbohydrates = (data.totalCarbohydrates * data.unitAmount * comboAmount) / 3
-                fat =  (data.totalFat * data.unitAmount * comboAmount) / 3
-                return (
-                    <div>
-                        <div>Protein {protein} g</div>
-                        <div>Carbohydrates {carbohydrates} g</div>
-                        <div>Fat {fat} g</div>
-                        <div>Calories {calories}</div>
-                    </div>
-                )
-                break;
-            case "tbsp":
+                    console.log(item.unitAmount)
 
-                // data.gramsPerTbsp * data.unitAmount
+                    if (!isNaN(numericValue)
+                        && key !== "gramsPerTbsp"
+                        && key !== "price"
+                        && key !== "servingSizeGrams"
+                        && key !== "unitAmount"
+                        && key !==  "unitPrice"
+                        && key !== "unitGramsOrCups"
+                        && key !== "comboAmount"
+                    ) {
+                        switch (item.unitGramsOrCups) {
 
-                calories = data.calories * data.unitAmount * comboAmount
-                protein = data.protein * data.unitAmount * comboAmount
-                carbohydrates = data.totalCarbohydrates * data.unitAmount * comboAmount
-                fat =  data.totalFat * data.unitAmount * comboAmount
-                return (
-                    <div>
-                        <div>Protein {protein} g</div>
-                        <div>Carbohydrates {carbohydrates} g</div>
-                        <div>Fat {fat} g</div>
-                        <div>Calories {calories}</div>
-                    </div>
-                )
-                break;
-            case "cups":
-                calories = (data.calories * data.unitAmount * comboAmount) * 16
-                protein = (data.protein * data.unitAmount * comboAmount) * 16
-                carbohydrates = (data.totalCarbohydrates * data.unitAmount * comboAmount) * 16
-                fat =  (data.totalFat * data.unitAmount * comboAmount) * 16
-                return (
-                    <div>
-                        <div>Protein {protein} g</div>
-                        <div>Carbohydrates {carbohydrates} g</div>
-                        <div>Fat {fat} g</div>
-                        <div>Calories {calories}</div>
-                    </div>
-                )
-                break;
 
+                            case "item":
+                                multipliedItem[key] = numericValue * item.comboAmount * item.unitAmount ;
+                                break;
+                            case "grams":
+                                multipliedItem[key] = numericValue * item.comboAmount * (item.unitAmount/item.servingSizeGrams) ;
+                                break;
+                            case "tsp":
+                                multipliedItem[key] = numericValue * item.comboAmount * (((item.gramsPerTbsp/item.servingSizeGrams)*item.unitAmount)/3) ;
+                                break;
+                            case "tbsp":
+                                multipliedItem[key] = numericValue * item.comboAmount * ((item.gramsPerTbsp/item.servingSizeGrams)*item.unitAmount) ;
+                                break;
+                            case "cups":
+                                multipliedItem[key] = (numericValue * ((item.gramsPerTbsp/item.servingSizeGrams)*16)*item.comboAmount) ;
+
+                                break;
+                        }
+                    } else {
+                        multipliedItem[key] = originalValue;
+                    }
+                });
+
+                return multipliedItem;
+            });
         }
 
+        function sumValuesInArray(arrayOfObjects) {
+            // Initialize an object to store the sum
+            const sumObject = {};
+
+            // Iterate through each object in the array
+            arrayOfObjects.forEach((obj) => {
+                // Iterate through each key in the object
+                Object.keys(obj).forEach((key) => {
+                    // Convert the value to a number and add it to the sum
+                    const numericValue = Number(obj[key]);
+                    if (!isNaN(numericValue)) {
+                        sumObject[key] = (sumObject[key] || 0) + numericValue;
+                    }
+                });
+            });
+
+            // Return the object with summed values
+            return sumObject;
+        }
+        let amount, sumResult, ingredientNutrition, multipliedArray;
+
+        const formatToTwoDecimalPlaces = (value) => {
+            return value % 1 !== 0 ? value.toFixed(2) : value;
+        };
+        let calories, protein, fat,  carbohydrates = 0;
+
+
+        console.log(data)
+
+        multipliedArray = multiplyValuesInArray();
+        console.log(multipliedArray);
+        console.log(multipliedArray[i]);
+        sumResult = sumValuesInArray(multipliedArray);
+        console.log(sumResult);
+
+        if(multipliedArray[i] !== undefined){
+            protein = multipliedArray[i].protein;
+            carbohydrates =  multipliedArray[i].totalCarbohydrates;
+            fat = multipliedArray[i].totalFat;
+            calories = multipliedArray[i].calories;
+            console.log(protein, carbohydrates, fat, calories)
+            let stats= ([
+                {name: "Protein", value: protein, minimumRecommended: 40, max: 70},
+                {name: "Carbs", value: carbohydrates, minimumRecommended: 60, max: 120},
+                {name: "Fats", value: fat, minimumRecommended: 50, max: 120},
+                {name: "Calories", value: calories, minimumRecommended: 300, max: 1000}])
+                console.log(
+                    "name: Protein, value:", protein,
+                    "name: Carbs, value:", carbohydrates,
+                    "name: Fats, value:", fat,
+                    "name: Calories, value:", calories)
+
+            if (protein > 0 || carbohydrates > 0 || fat > 0 || calories > 0) {
+                console.log("Returning!!")
+                return (
+                    <div>
+                        {/*<div style={{fontSize: ".7rem",}}>*/}
+                        {/*    <div>Protein {formatToTwoDecimalPlaces(protein)} g</div>*/}
+                        {/*    <div>Carbohydrates {formatToTwoDecimalPlaces(carbohydrates)} g</div>*/}
+                        {/*    <div>Fat {formatToTwoDecimalPlaces(fat)} g</div>*/}
+                        {/*    <div>Calories {formatToTwoDecimalPlaces(calories)}</div>*/}
+                        {/*</div>*/}
+
+                        {macroStats !== [] && (
+                            <NutrientProgressBar
+                                nutritionData={stats}
+
+                            />
+
+                        )}
+
+                    </div>
+
+
+                );
+            }else {
+                console.log("else")
+                return null;
+            }
+
+        }else {
+            console.log("else2")
+
+            return null;
+        }
 
 
     }
@@ -519,7 +549,7 @@ function AddOnComponent({data, i, addOnsFromFirebase, addOnsCartArray, setAddOns
                 let tempArr = [...addOnsCartArray]
                 let temp = addOnsCartArray[cartIndex];
 
-                if (addOnsCartArray[cartIndex].comboAmount > 1 ){
+                if (addOnsCartArray[cartIndex].unitAmount > 1 ){
 
                     temp.comboAmount = addOnsCartArray[cartIndex].comboAmount - 1;
                     tempArr.splice(cartIndex, 1, temp)
@@ -552,10 +582,137 @@ function AddOnComponent({data, i, addOnsFromFirebase, addOnsCartArray, setAddOns
         }
     }
 
+    const priceToDisplay =   data.unitPrice * comboAmount;
+
     return (
         <IonCard style={{
-            minWidth: "6em",
-            width:"6em",
+            minWidth: "10em",
+            width: "10em",
+            // minHeight: "25em",
+            height: "fit-content",
+            fontSize: ".6rem",
+            margin: ".5em",
+            cursor: "pointer",
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+            borderRadius: "8px",
+            overflow: "hidden",
+            transition: "transform 0.2s ease-in-out",
+            '&:hover': {
+                transform: 'scale(1.05)',
+            },
+        }}>
+            <div style={{
+                display: "flex",
+                flexDirection: "column",
+            }}>
+                <div style={{
+                    fontSize: ".8rem",
+                    height: "3em",
+                    textAlign: "center",
+                    padding: ".2em",
+                    color: "#333",
+                    fontWeight: data.comboAmount > 0 ? "bold" : "normal",
+                    // backgroundColor: data.comboAmount > 0 ? "#498bce" : "#aabbcc",
+                }}>
+                    {data.ingredientName}
+                </div>
+
+                <div style={{
+                    border: "solid",
+                    width: "7em",
+                    height: "5em",
+                    borderColor: "#ddd",
+                    margin: "auto"
+                }}>
+                    <img
+                        src={data.imgUrl}
+                        style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                        }}
+                    />
+
+                </div>
+
+                <div style={{
+                    flexDirection: "column",
+                    display: "flex",
+                    justifyContent: "space-around",
+                }}>
+                    <div style={{ textAlign: "center", margin: ".2em", fontSize: "0.8rem", color: "#555" }}>
+                        {data.unitAmount} {data.unitGramsOrCups}
+                    </div>
+
+                    <IonCard style={{
+                        border: "solid thin",
+                        width: "fit-content",
+                        display: "flex",
+                        height: "100%",
+                        flexFlow: "row",
+                        margin: ".5em auto",
+                    }}>
+                        <div>
+                            <IonIcon
+                                onClick={() => onDecreaseAmountToData(data.docId)}
+                                style={{
+                                    fontSize: "20px",
+                                    height: "100%",
+                                    color: "black",
+                                    cursor: "pointer",
+                                }}
+                                icon={subtractIcon}
+                            />
+                        </div>
+                        <div style={{
+                            fontSize: "1rem",
+                            height: "100%",
+                            margin: "auto .3em",
+                            cursor: "default",
+                            color: "black",
+                        }}>
+                            <span style={{color:"green", fontWeight:"bold"}}>x</span>
+                           {comboAmount}
+                        </div>
+                        <div>
+                            <IonIcon
+                                onClick={() => onAddAmountToData(data.docId)}
+                                style={{
+                                    fontSize: "20px",
+                                    cursor: "pointer",
+                                    color: "black",
+                                    height: "100%",
+                                }}
+                                icon={addIcon}
+                            />
+                        </div>
+                    </IonCard>
+
+                    {addOnsCartArray.length > 0 && (
+                        <div>
+                            {calculateAndRenderAddOnsNutritionProfile()}
+
+
+                        </div>
+                    )}
+
+
+                    <label style={{
+                        textAlign: "center",
+                        fontSize: "1.2rem",
+                        margin: "1em auto",
+                        color: comboAmount <= 0 ? "rgba(0,0,0,0.5)" : "green",
+                    }}>
+                        ${priceToDisplay.toFixed(2)}
+                    </label>
+
+                </div>
+            </div>
+        </IonCard>
+
+        /*<IonCard style={{
+            minWidth: "10em",
+            width:"10em",
             minHeight: "6em",
             height:"fit-content",
             margin: ".5em",
@@ -621,7 +778,7 @@ function AddOnComponent({data, i, addOnsFromFirebase, addOnsCartArray, setAddOns
                             cursor: "default",
                             color: "black"
                         }}>{comboAmount}
-                            {/*{renderComboAmount()}*/}
+                            {/!*{renderComboAmount()}*!/}
                         </div>
                         <div><IonIcon
 
@@ -650,19 +807,166 @@ function AddOnComponent({data, i, addOnsFromFirebase, addOnsCartArray, setAddOns
                         color:  ("green")
                     }}>
                         ${data.unitPrice * (comboAmount)}
-                        {/*${data.unitPrice * (comboAmount - data.firstNumberOfUnitsFree)}*/}
+                        {/!*${data.unitPrice * (comboAmount - data.firstNumberOfUnitsFree)}*!/}
                     </label>)}
 
                     {calculateAndRenderAddOnsNutritionProfile()}
 
                 </div>
             </div>
-        </IonCard>
+        </IonCard>*/
     )
 
 }
 
 function AddOnCartComponent({addOnsCartArray, setMenuItemPageSwitchCase}){
+
+    const [macroStats, setMacroStats] = useState([])
+    function multiplyValuesInArray() {
+        console.log(addOnsCartArray)
+        return addOnsCartArray?.map((item) => {
+            const multipliedItem = {};
+
+
+            Object.keys(item).forEach((key) => {
+                const originalValue = item[key];
+                const numericValue = Number(originalValue);
+
+                if (!isNaN(numericValue)
+                    && key !== "gramsPerTbsp"
+                    && key !== "price"
+                    && key !== "servingSizeGrams"
+                    && key !== "unitAmount"
+                    && key !==  "unitPrice"
+                    && key !== "unitGramsOrCups"
+                    && key !== "comboAmount"
+                ) {
+                    switch (item.unitGramsOrCups) {
+
+                        case "item":
+                            multipliedItem[key] = numericValue * item.comboAmount  ;
+                            break;
+                        case "grams":
+                            multipliedItem[key] = numericValue * item.comboAmount * (item.unitAmount/item.servingSizeGrams) ;
+                            break;
+                        case "tsp":
+                            multipliedItem[key] = numericValue * item.comboAmount * (((item.gramsPerTbsp/item.servingSizeGrams)*item.unitAmount)/3) ;
+                            break;
+                        case "tbsp":
+                            multipliedItem[key] = numericValue * item.comboAmount * ((item.gramsPerTbsp/item.servingSizeGrams)*item.unitAmount) ;
+                            break;
+                        case "cups":
+                            multipliedItem[key] = (numericValue * ((item.gramsPerTbsp/item.servingSizeGrams)*16)*item.comboAmount) ;
+
+                            break;
+                    }
+                } else {
+                    multipliedItem[key] = originalValue;
+                }
+            });
+
+            return multipliedItem;
+        });
+    }
+
+
+    function sumValuesInArray(arrayOfObjects) {
+        // Initialize an object to store the sum
+        const sumObject = {};
+
+        // Iterate through each object in the array
+        arrayOfObjects.forEach((obj) => {
+            // Iterate through each key in the object
+            console.log(obj)
+            Object.keys(obj).forEach((key) => {
+                // Convert the value to a number and add it to the sum
+                const numericValue = Number(obj[key]);
+                if (!isNaN(numericValue)) {
+                    sumObject[key] = (sumObject[key] || 0) + numericValue;
+                }
+            });
+        });
+
+        // Return the object with summed values
+        return sumObject;
+    }
+
+
+
+    function calculateCartNutritionTotals(){
+        console.log(addOnsCartArray, "CALCULATING cart NUTRITION TOTALS")
+            console.log(addOnsCartArray)
+            let sumResult, multipliedArray;
+
+            const formatToTwoDecimalPlaces = (value) => {
+                return value % 1 !== 0 ? value.toFixed(2) : value;
+            };
+            let calories, protein, fat,  carbohydrates = 0;
+
+
+            multipliedArray = multiplyValuesInArray();
+            console.log(multipliedArray);
+
+            sumResult = sumValuesInArray(multipliedArray);
+            console.log(sumResult);
+
+            protein = sumResult.protein;
+            carbohydrates =  sumResult.totalCarbohydrates;
+            fat = sumResult.totalFat;
+            calories = sumResult.calories;
+            console.log(protein, carbohydrates, fat, calories)
+
+
+        // if(multipliedArray[i] !== undefined){
+        //     protein = multipliedArray[i].protein;
+        //     carbohydrates =  multipliedArray[i].totalCarbohydrates;
+        //     fat = multipliedArray[i].totalFat;
+        //     calories = multipliedArray[i].calories;
+            console.log(protein, carbohydrates, fat, calories)
+        let stats= ([
+            {name: "Protein", value: protein, minimumRecommended: 40, max: 70},
+            {name: "Carbs", value: carbohydrates, minimumRecommended: 60, max: 120},
+            {name: "Fats", value: fat, minimumRecommended: 50, max: 120},
+            {name: "Calories", value: calories, minimumRecommended: 300, max: 1000}])
+            console.log(
+                "name: Protein, value:", protein,
+                "name: Carbs, value:", carbohydrates,
+                "name: Fats, value:", fat,
+                "name: Calories, value:", calories)
+
+        if (protein > 0 || carbohydrates > 0 || fat > 0 || calories > 0) {
+            console.log("Returning!!22")
+            return (
+                <div style={{width: "4em", margin: "auto"}}>
+                    {/*<div style={{fontSize: ".7rem",}}>*/}
+                    {/*    <div>Protein {formatToTwoDecimalPlaces(protein)} g</div>*/}
+                    {/*    <div>Carbohydrates {formatToTwoDecimalPlaces(carbohydrates)} g</div>*/}
+                    {/*    <div>Fat {formatToTwoDecimalPlaces(fat)} g</div>*/}
+                    {/*    <div>Calories {formatToTwoDecimalPlaces(calories)}</div>*/}
+                    {/*</div>*/}
+
+                    {macroStats !== [] && (
+                        <NutrientProgressBar
+                            nutritionData={stats}
+
+                        />
+
+                    )}
+
+                </div>
+
+
+            );
+        }else {
+            console.log("else")
+            return <div>else</div>;
+        }
+
+
+
+    }
+
+
 
 
     function renderTotal(){
@@ -670,29 +974,48 @@ function AddOnCartComponent({addOnsCartArray, setMenuItemPageSwitchCase}){
         addOnsCartArray.map((addOn) => {
             total += addOn.comboAmount * addOn.unitPrice
         })
-        return total
+        return (
+            <div>
+                {calculateCartNutritionTotals()}
+
+                <div style={{fontSize:"1.8rem"}}>
+                    ${total.toFixed(2)}
+                </div>
+            </div>
+        )
     }
 
 
-    return (
-        <IonCard>
-            <IonCardContent style={{textAlign:"center"}}>
-                <div style={{ fontSize:"1.8rem"}} >Total</div>
-                <div>+ Add Ons</div>
-                <div style={{fontWeight:"bold", fontSize:"1.8rem", color: "green"}}>
-                    ${renderTotal()}
-                </div>
+    useEffect(() => {
+        console.log("USE EFFECT !@$")
+    }, [])
 
-                <IonButton
-                    onClick={() => setMenuItemPageSwitchCase("")}
-                    color="warning"
-                    // fill="outline"
-                    expand="block">Continue</IonButton>
+    function renderAddOnsCartComponent(){
+        return (
+            <IonCard>
+                <IonCardContent style={{textAlign:"center"}}>
+                    <div style={{ fontSize:"1.8rem"}} >Total</div>
+                    <div>+ Add Ons</div>
+                    <div style={{fontWeight:"bold", fontSize:"1.8rem", color: "green"}}>
+                        {renderTotal()}
+                    </div>
+
+                    <IonButton
+                        onClick={() => setMenuItemPageSwitchCase("")}
+                        color="warning"
+                        // fill="outline"
+                        expand="block">Continue</IonButton>
 
 
-            </IonCardContent>
-        </IonCard>
-    )
+                </IonCardContent>
+            </IonCard>
+        )
+    }
+
+    return ( <div>
+        {renderAddOnsCartComponent()}
+    </div>)
+
 }
 
 function AddToppingsComponent({ addOnsList, setAddOnsList, menuItemId,
@@ -735,18 +1058,19 @@ function AddToppingsComponent({ addOnsList, setAddOnsList, menuItemId,
             loadToppingOptionsData()
         })
     }
-    function AddAddOnUnitSizeAndPrice({ recipeIngredientsList, setRecipeIngredientsList, ingredientToBeAdded, setRecipeIngredientComponentState,
+    function AddAddOnUnitSizeAndPrice({ recipeIngredientsList, setRecipeIngredientsList, addOnToBeAdded, setRecipeIngredientComponentState,
                                       }){
 
         const [unitAmount, setUnitAmount ] = useState(0)
         const [ unitPrice, setUnitPrice ] = useState()
 
-        const [ gramsOrCups, setGramsOrCups ] = useState(undefined)
+        const [ unitGramsOrCups, setUnitGramsOrCups ] = useState(undefined)
 
         const [buttonEnabled, setButtonEnabled ] = useState(false)
 
         useEffect(() =>{
-            if ( gramsOrCups !== undefined && unitAmount > 0 && unitPrice > 0){
+            console.log("Ingredient to be added! ", addOnToBeAdded)
+            if ( unitGramsOrCups !== undefined && unitAmount > 0 && unitPrice > 0){
                 setButtonEnabled(true)
                 console.log("Setting Button True")
             }else{
@@ -755,48 +1079,53 @@ function AddToppingsComponent({ addOnsList, setAddOnsList, menuItemId,
 
             }
 
-            console.log(ingredientToBeAdded)
-        },[gramsOrCups, buttonEnabled, unitAmount, unitPrice])
+            console.log(addOnToBeAdded)
+            console.log(recipeIngredientsList)
+        },[unitGramsOrCups, buttonEnabled, unitAmount, unitPrice, recipeIngredientsList, ])
 
 
 
         async function onSaveIngredientToList() {
             let temp = [...recipeIngredientsList]
-            console.log(temp, unitAmount + gramsOrCups, unitPrice, ingredientToBeAdded)
+            console.log(temp, unitAmount + unitGramsOrCups, unitPrice, addOnToBeAdded)
 
             const isSearched = (element) => (
-                element.ingredientName?.toLowerCase().includes(ingredientToBeAdded.ingredientName?.toLowerCase())
+                element.ingredientName?.toLowerCase().includes(addOnToBeAdded.ingredientName?.toLowerCase())
 
             )
 
             let result1 = temp.filter(isSearched)
             console.log(result1)
 
-            const toppingOption = {...ingredientToBeAdded, unitAmount, unitPrice, gramsOrCups}
+            addOnToBeAdded.unitAmount = unitAmount;
+            addOnToBeAdded.unitPrice = unitPrice;
+            addOnToBeAdded.unitGramsOrCups = unitGramsOrCups;
+            let toppingOption = {...addOnToBeAdded, unitAmount, unitPrice, unitGramsOrCups}
 
 
             let temp1 = recipeIngredientsList;
             console.log(recipeIngredientsList[0])
+            console.log(addOnToBeAdded, toppingOption)
+
             if (recipeIngredientsList.length === 1 && recipeIngredientsList[0] === ' ') {
 
-                console.log({ingredientToBeAdded, unitAmount, gramsOrCups, unitPrice})
-                setRecipeIngredientsList([{...ingredientToBeAdded, unitAmount, unitPrice, gramsOrCups}])
+                console.log({addOnToBeAdded, unitAmount, unitGramsOrCups, unitPrice})
+                setRecipeIngredientsList([{...addOnToBeAdded, unitAmount, unitPrice, unitGramsOrCups}])
 
             } else if (recipeIngredientsList[0] !== ' ' && result1.length === 0) {
-                console.log(recipeIngredientsList, ingredientToBeAdded, unitAmount, gramsOrCups, +" $" + unitPrice)
+                console.log(recipeIngredientsList, addOnToBeAdded, unitAmount, unitGramsOrCups, unitPrice)
+                console.log(addOnToBeAdded, toppingOption)
 
-                setRecipeIngredientsList([...recipeIngredientsList, {
-                    ...ingredientToBeAdded,
-                    unitAmount,
-                    unitPrice,
-                    gramsOrCups
-                }])
-                console.log(toppingOption)
-                await addToppingToCustomDatabase(`recipes-collection/${menuItemId}/addOns`, toppingOption).then(r => console.log(r))
+                let temp = [...recipeIngredientsList, addOnToBeAdded]
+                console.log(temp)
+                setRecipeIngredientsList([...recipeIngredientsList, addOnToBeAdded])
+                console.log(toppingOption, temp, addOnToBeAdded)
 
+               // const res = await addToppingToCustomDatabase(`recipes-collection/${menuItemId}/addOns`, toppingOption).then(r => console.log(r))
+               //  console.log(res)
 
             } else {
-                let result2 = {...result1[0], unitAmount, unitPrice, gramsOrCups}
+                let result2 = {...result1[0], unitAmount, unitPrice, unitGramsOrCups}
                 console.log(result2)
                 temp1[(temp1.length - 1)] = result2;
                 console.log(temp1)
@@ -816,17 +1145,17 @@ function AddToppingsComponent({ addOnsList, setAddOnsList, menuItemId,
                     <IonCard style={{margin: "1em auto", width: "fit-content"}}>
                         <IonCardContent style={{padding: ".5em"}}>
                             <IonCardTitle color="primary">
-                                {ingredientToBeAdded.ingredientName}
+                                {addOnToBeAdded.ingredientName}
                             </IonCardTitle>
                         </IonCardContent>
                     </IonCard>
 
                 </IonCardHeader>
                 <IonCardContent>
-                    <div style={{ width: "100%", margin: "auto", display: "flex"}}>
-                        <input style={{width: "6em"}} value={unitAmount} type="number" onChange={(e) => {setUnitAmount(e.target.value)}}/>
+                    <div style={{ width: "fit-content", margin: "auto", display: "flex"}}>
+                        <input style={{width: "2em"}} value={unitAmount} type="number" onChange={(e) => {setUnitAmount(e.target.value)}}/>
                         <IonSelect
-                            onIonChange={(e) => setGramsOrCups(e.target.value)}
+                            onIonChange={(e) => setUnitGramsOrCups(e.target.value)}
                             placeholder="g/cups">
                             <IonSelectOption >item</IonSelectOption>
                             <IonSelectOption >grams</IonSelectOption>
@@ -1104,7 +1433,7 @@ function AddToppingsComponent({ addOnsList, setAddOnsList, menuItemId,
                 return (<AddAddOnUnitSizeAndPrice
                         recipeIngredientsList={addOnsList}
                         setRecipeIngredientsList={setAddOnsList}
-                        ingredientToBeAdded={addOnToBeAdded}
+                        addOnToBeAdded={addOnToBeAdded}
                         setRecipeIngredientComponentState={setToppingsSearchStep}
                     />
                 )
@@ -1137,8 +1466,9 @@ function AddToppingsComponent({ addOnsList, setAddOnsList, menuItemId,
 function SelectedAddOnComponent({data,  addOnsList, setAddOnsList, i, setAddOnsChange}){
 
 
-    const [ optionAmount, setOptionAmount ] = useState(data.comboAmount === undefined ? (0):(data.comboAmount))
-    console.log(data.comboAmount)
+    console.log(data, addOnsList)
+    const [ optionAmount, setOptionAmount ] = useState(data.unitAmount === undefined ? (0):(data.unitAmount))
+    console.log(data.unitAmount)
 
 
 
@@ -1175,7 +1505,7 @@ function SelectedAddOnComponent({data,  addOnsList, setAddOnsList, i, setAddOnsC
     }
     function onDecreaseAddOnAmount(){
         let temp = addOnsList
-        temp[i].comboAmount = optionAmount -1;
+        temp[i].unitAmount = optionAmount -1;
         setOptionAmount((optionAmount - 1 ))
         setAddOnsList(temp)
         setAddOnsChange(true)
@@ -1185,7 +1515,7 @@ function SelectedAddOnComponent({data,  addOnsList, setAddOnsList, i, setAddOnsC
 
     function onAddOptionAmount(){
         let temp = addOnsList
-        temp[i].comboAmount = optionAmount  + 1;
+        temp[i].unitAmount = optionAmount  + 1;
         setOptionAmount((optionAmount + 1 ))
         setAddOnsList(temp)
         setAddOnsChange(true)
@@ -1195,7 +1525,7 @@ function SelectedAddOnComponent({data,  addOnsList, setAddOnsList, i, setAddOnsC
 
         // console.log(addOnsList..includes(data.name))
 
-        if (data.comboAmount > 0 && addOnsList[i].name === data.name){
+        if (data.unitAmount > 0 && addOnsList[i]?.ingredientName === data.ingredientName){
             console.log("INCLUDES", data, loadedList, addOnsList)
             return (
                 <div style={{
@@ -1236,7 +1566,7 @@ function SelectedAddOnComponent({data,  addOnsList, setAddOnsList, i, setAddOnsC
                                 {data.ingredientName}
 
                             </div>
-                            <div style={{textAlign:"center", margin: ".2em"}}>{data.unitAmount} {data.gramsOrCups}</div>
+                            <div style={{textAlign:"center", margin: ".2em"}}>{data.unitAmount} {data.unitGramsOrCups}</div>
 
                             <div style={{
                                 textAlign: "center",

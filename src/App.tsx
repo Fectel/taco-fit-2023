@@ -88,6 +88,7 @@ const App: React.FC = () => {
 
 
 
+
               {/*<Route exact path="/recipes2" >*/}
               {/*  <RecipesPage2 />*/}
               {/*</Route>*/}
